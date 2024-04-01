@@ -28,6 +28,10 @@
     "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
-    "bootstrap": "^5.3.3"
+    "bootstrap": "^5.3.3",
+    "yup": "^1.4.0"
+  },
+  "overrides": {
+    "express": "4.19.2"
   }
 }
