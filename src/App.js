@@ -7,7 +7,7 @@ const runApp = () => {
     addingRSSFeedProcess: {
       state: 'filling',
       value: '',
-      valid: null,
+      validationState: null,
       errors: [],
     },
   };
@@ -25,12 +25,18 @@ const runApp = () => {
       })
       .then((validUrl) => {
         watchedState.addingRSSFeedProcess.state = 'processed';
-        watchedState.addingRSSFeedProcess.valid = 'true';
+        watchedState.addingRSSFeedProcess.validationState = 'valid';
         watchedState.addedRSSFeeds.push(validUrl);
       })
       .catch((err) => {
+        if (err.message === 'this must be a valid URL') {
+          watchedState.addingRSSFeedProcess.validationState = 'unvalidUrl';
+        } else if (err.message.startsWith('this must not be one of the following values')) {
+          watchedState.addingRSSFeedProcess.validationState = 'existingUrl';
+        } else {
+          throw new Error(`Unknown validation error - ${err}`);
+        }
         watchedState.addingRSSFeedProcess.state = 'processed';
-        watchedState.addingRSSFeedProcess.valid = 'false';
         watchedState.addingRSSFeedProcess.errors.push(err);
       }); 
   };
@@ -39,7 +45,7 @@ const runApp = () => {
     const url = target.value;
     watchedState.addingRSSFeedProcess.value = url;
     watchedState.addingRSSFeedProcess.state = 'filling';
-    watchedState.addingRSSFeedProcess.valid = null;
+    watchedState.addingRSSFeedProcess.validationState = null;
   };
 
   elements.input.addEventListener('input', handleChange);

@@ -27,20 +27,27 @@ const handleProcessState = (elements, processState) => {
     }
 };
 
-const handleValidation = (elements, validationStatus) => {
-    switch (validationStatus) {
-        case 'true':
+const showNegativeFeedback = () => {
+    elements.input.classList.add('is-invalid');
+    elements.feedback.classList.remove('text-success');
+    elements.feedback.classList.add('text-danger');  
+};
+
+const handleValidation = (elements, validationState) => {
+    switch (validationState) {
+        case 'valid':
             elements.form.reset();
             elements.feedback.classList.remove('text-danger');
             elements.feedback.classList.add('text-success');
             elements.feedback.textContent = 'RSS успешно загружен';
             break;
-        case 'false':
-            elements.input.classList.add('is-invalid');
-            elements.feedback.classList.remove('text-success');
-            elements.feedback.classList.add('text-danger');
+        case 'unvalidUrl':
+            showNegativeFeedback();
             elements.feedback.textContent = 'Ссылка должна быть валидным URL';
             break;
+        case 'existingUrl':
+            showNegativeFeedback();
+            elements.feedback.textContent = 'RSS уже существует';
         default:
             break;
     }
@@ -51,7 +58,7 @@ const render = (path, value) => {
         case 'addingRSSFeedProcess.state':
             handleProcessState(elements, value);
             break;     
-        case 'addingRSSFeedProcess.valid':
+        case 'addingRSSFeedProcess.validationState':
             handleValidation(elements, value);
             break;   
         default:
