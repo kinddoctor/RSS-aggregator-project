@@ -16,8 +16,8 @@ const runApp = () => {
   const handleSubmit = (event) => {
     event.preventDefault();
     watchedState.addingRSSFeedProcess.state = 'processing';
-    const url = watchedState.addingRSSFeedProcess.value;
-    const promise = Promise.resolve(url);
+    const urlString = watchedState.addingRSSFeedProcess.value;
+    const promise = Promise.resolve(urlString);
     promise
       .then((url) => {
         const schema = yup.string().url().notOneOf(watchedState.addedRSSFeeds);
@@ -38,7 +38,7 @@ const runApp = () => {
         }
         watchedState.addingRSSFeedProcess.state = 'processed';
         watchedState.addingRSSFeedProcess.errors.push(err);
-      }); 
+      });
   };
 
   const handleChange = ({ target }) => {
