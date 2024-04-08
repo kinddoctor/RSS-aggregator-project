@@ -6,24 +6,23 @@ const runApp = () => {
     addedRSSFeeds: [],
     addingRSSFeedProcess: {
       state: 'filling',
-      valid: 'true',
+      value: '',
+      valid: null,
       errors: [],
     },
   };
   const watchedState = makeStateWatched(initialState);
 
-  const schema = yup.string().url().notOneOf(watchedState.addedRSSFeeds);
-
   const handleSubmit = (event) => {
-    const promise = new Promise((resolve) => {
-      event.preventDefault();
-      watchedState.addingRSSFeedProcess.state = 'processing';
-      const formData = new FormData(event.target);
-      const url = formData.get('url');
-      resolve(url);
-    });
+    event.preventDefault();
+    watchedState.addingRSSFeedProcess.state = 'processing';
+    const url = watchedState.addingRSSFeedProcess.value;
+    const promise = Promise.resolve(url);
     promise
-      .then((url) => schema.validate(url))
+      .then((url) => {
+        const schema = yup.string().url().notOneOf(watchedState.addedRSSFeeds);
+        return schema.validate(url);
+      })
       .then((validUrl) => {
         watchedState.addingRSSFeedProcess.state = 'processed';
         watchedState.addingRSSFeedProcess.valid = 'true';
@@ -36,8 +35,11 @@ const runApp = () => {
       }); 
   };
 
-  const handleChange = (e) => {
+  const handleChange = ({ target }) => {
+    const url = target.value;
+    watchedState.addingRSSFeedProcess.value = url;
     watchedState.addingRSSFeedProcess.state = 'filling';
+    watchedState.addingRSSFeedProcess.valid = null;
   };
 
   elements.input.addEventListener('input', handleChange);

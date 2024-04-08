@@ -42,7 +42,7 @@ const handleValidation = (elements, validationStatus) => {
             elements.feedback.textContent = 'Ссылка должна быть валидным URL';
             break;
         default:
-            throw new Error(`Unknown validationStatus - ${validationStatus}!`);
+            break;
     }
 };
 
@@ -50,18 +50,12 @@ const render = (path, value) => {
     switch (path) {
         case 'addingRSSFeedProcess.state':
             handleProcessState(elements, value);
-            break;
+            break;     
         case 'addingRSSFeedProcess.valid':
             handleValidation(elements, value);
-            break;
-        case 'addingRSSFeedProcess.errors':
-            console.log(`An error has occured - ${value}`);
-            break;
-        case 'addedRSSFeeds':
-            console.log(`RSS feed added - ${value}`);
-            break;
+            break;   
         default:
-            throw new Error(`Unknown path - ${path}!`);  
+            break;
     }
 };
 
