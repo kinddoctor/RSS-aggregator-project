@@ -7,6 +7,8 @@ const elements = {
   feedback: document.querySelector('.feedback'),
 };
 
+let i18nextInstance;
+
 const handleProcessState = (processState) => {
   switch (processState) {
     case 'filling':
@@ -27,31 +29,27 @@ const handleProcessState = (processState) => {
   }
 };
 
-const showNegativeFeedback = () => {
-  elements.input.classList.add('is-invalid');
-  elements.feedback.classList.remove('text-success');
-  elements.feedback.classList.add('text-danger');
-};
-
-const handleValidation = (validationState) => {
-  switch (validationState) {
+const handleValidationState = (state) => {
+  switch (state) {
     case 'valid':
       elements.form.reset();
       elements.feedback.classList.remove('text-danger');
       elements.feedback.classList.add('text-success');
-      elements.feedback.textContent = 'RSS успешно загружен';
+      elements.feedback.textContent = i18nextInstance.t('validation.success');
       break;
-    case 'unvalidUrl':
-      showNegativeFeedback();
-      elements.feedback.textContent = 'Ссылка должна быть валидным URL';
-      break;
-    case 'existingUrl':
-      showNegativeFeedback();
-      elements.feedback.textContent = 'RSS уже существует';
+    case 'unvalid':
+      elements.input.classList.add('is-invalid');
+      elements.feedback.classList.remove('text-success');
+      elements.feedback.classList.add('text-danger');
       break;
     default:
       break;
   }
+};
+
+const handleValidationError = (error) => {
+  console.log(`0!0${JSON.stringify(error)}`);
+  elements.feedback.textContent = i18nextInstance.t(`validation.errors.${error}`);
 };
 
 const render = (path, value) => {
@@ -59,14 +57,21 @@ const render = (path, value) => {
     case 'addingRSSFeedProcess.state':
       handleProcessState(value);
       break;
-    case 'addingRSSFeedProcess.validationState':
-      handleValidation(value);
+    case 'addingRSSFeedProcess.validation.state':
+      handleValidationState(value);
+      break;
+    case 'addingRSSFeedProcess.validation.currentError':
+      handleValidationError(value);
       break;
     default:
       break;
   }
 };
 
-const makeStateWatched = (state) => onChange(state, render);
+const makeStateWatched = (state, i18nextInst) => {
+  i18nextInstance = i18nextInst;
+  console.log(`!!!${JSON.stringify(i18nextInstance)}`);
+  return onChange(state, render);
+};
 
 export { elements, makeStateWatched };

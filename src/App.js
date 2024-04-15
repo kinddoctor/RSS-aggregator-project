@@ -1,17 +1,23 @@
 import * as yup from 'yup';
+import i18next from 'i18next';
 import { elements, makeStateWatched } from './View.js';
 
-const runApp = () => {
+const app = (i18nextInst) => {
   const initialState = {
     addedRSSFeeds: [],
+    errors: {
+      allValidationErrors: [],
+    },
     addingRSSFeedProcess: {
       state: 'filling',
       value: '',
-      validationState: null,
-      errors: [],
+      validation: {
+        state: null,
+        currentError: '',
+      },
     },
   };
-  const watchedState = makeStateWatched(initialState);
+  const watchedState = makeStateWatched(initialState, i18nextInst);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -20,24 +26,25 @@ const runApp = () => {
     const promise = Promise.resolve(urlString);
     promise
       .then((url) => {
+        yup.setLocale({
+          string: {
+            url: 'invalid url',
+            notOneOf: 'already exists',
+          },
+        });
         const schema = yup.string().url().notOneOf(watchedState.addedRSSFeeds);
         return schema.validate(url);
       })
       .then((validUrl) => {
         watchedState.addingRSSFeedProcess.state = 'processed';
-        watchedState.addingRSSFeedProcess.validationState = 'valid';
+        watchedState.addingRSSFeedProcess.validation.state = 'valid';
         watchedState.addedRSSFeeds.push(validUrl);
       })
       .catch((err) => {
-        if (err.message === 'this must be a valid URL') {
-          watchedState.addingRSSFeedProcess.validationState = 'unvalidUrl';
-        } else if (err.message.startsWith('this must not be one of the following values')) {
-          watchedState.addingRSSFeedProcess.validationState = 'existingUrl';
-        } else {
-          throw new Error(`Unknown validation error - ${err}`);
-        }
+        watchedState.errors.allValidationErrors.push(err.message);
+        watchedState.addingRSSFeedProcess.validation.currentError = err.message;
+        watchedState.addingRSSFeedProcess.validation.state = 'unvalid';
         watchedState.addingRSSFeedProcess.state = 'processed';
-        watchedState.addingRSSFeedProcess.errors.push(err);
       });
   };
 
@@ -45,11 +52,33 @@ const runApp = () => {
     const url = target.value;
     watchedState.addingRSSFeedProcess.value = url;
     watchedState.addingRSSFeedProcess.state = 'filling';
-    watchedState.addingRSSFeedProcess.validationState = null;
+    watchedState.addingRSSFeedProcess.validation.state = null;
   };
 
   elements.input.addEventListener('input', handleChange);
   elements.form.addEventListener('submit', handleSubmit);
+};
+
+const runApp = () => {
+  const i18nextInstance = i18next.createInstance();
+  const promise = Promise.resolve(i18nextInstance.init({
+    lng: 'ru',
+    debug: true,
+    resources: {
+      ru: {
+        translation: {
+          validation: {
+            success: 'RSS успешно загружен',
+            errors: {
+              'invalid url': 'Ссылка должна быть валидным URL',
+              'already exist': 'RSS уже существует',
+            },
+          },
+        },
+      },
+    },
+  }));
+  promise.then((instance) => app(instance));
 };
 
 export default runApp;
