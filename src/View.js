@@ -7,8 +7,6 @@ const elements = {
   feedback: document.querySelector('.feedback'),
 };
 
-let i18nextInstance;
-
 const handleProcessState = (processState) => {
   switch (processState) {
     case 'filling':
@@ -29,7 +27,7 @@ const handleProcessState = (processState) => {
   }
 };
 
-const handleValidationState = (state) => {
+const handleValidationState = (state, i18nextInstance) => {
   switch (state) {
     case 'valid':
       elements.form.reset();
@@ -47,31 +45,29 @@ const handleValidationState = (state) => {
   }
 };
 
-const handleValidationError = (error) => {
-  console.log(`0!0${JSON.stringify(error)}`);
+const handleValidationError = (error, i18nextInstance) => {
   elements.feedback.textContent = i18nextInstance.t(`validation.errors.${error}`);
 };
 
-const render = (path, value) => {
-  switch (path) {
-    case 'addingRSSFeedProcess.state':
-      handleProcessState(value);
-      break;
-    case 'addingRSSFeedProcess.validation.state':
-      handleValidationState(value);
-      break;
-    case 'addingRSSFeedProcess.validation.currentError':
-      handleValidationError(value);
-      break;
-    default:
-      break;
-  }
+const getRender = (i18nextInstance) => (path, value) => {
+  const render = (pth, val) => {
+    switch (pth) {
+      case 'addingRSSFeedProcess.state':
+        handleProcessState(val);
+        break;
+      case 'addingRSSFeedProcess.validation.state':
+        handleValidationState(val, i18nextInstance);
+        break;
+      case 'addingRSSFeedProcess.validation.currentError':
+        handleValidationError(val, i18nextInstance);
+        break;
+      default:
+        break;
+    }
+  };
+  return render(path, value);
 };
 
-const makeStateWatched = (state, i18nextInst) => {
-  i18nextInstance = i18nextInst;
-  console.log(`!!!${JSON.stringify(i18nextInstance)}`);
-  return onChange(state, render);
-};
+const makeStateWatched = (state, i18nextInst) => onChange(state, getRender(i18nextInst));
 
 export { elements, makeStateWatched };

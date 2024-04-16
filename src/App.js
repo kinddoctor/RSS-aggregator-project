@@ -27,9 +27,11 @@ const app = (i18nextInst) => {
     promise
       .then((url) => {
         yup.setLocale({
+          mixed: {
+            notOneOf: 'already exists',
+          },
           string: {
             url: 'invalid url',
-            notOneOf: 'already exists',
           },
         });
         const schema = yup.string().url().notOneOf(watchedState.addedRSSFeeds);
@@ -42,6 +44,7 @@ const app = (i18nextInst) => {
       })
       .catch((err) => {
         watchedState.errors.allValidationErrors.push(err.message);
+        watchedState.addingRSSFeedProcess.validation.currentError = '';
         watchedState.addingRSSFeedProcess.validation.currentError = err.message;
         watchedState.addingRSSFeedProcess.validation.state = 'unvalid';
         watchedState.addingRSSFeedProcess.state = 'processed';
@@ -61,7 +64,7 @@ const app = (i18nextInst) => {
 
 const runApp = () => {
   const i18nextInstance = i18next.createInstance();
-  const promise = Promise.resolve(i18nextInstance.init({
+  i18nextInstance.init({
     lng: 'ru',
     debug: true,
     resources: {
@@ -71,14 +74,13 @@ const runApp = () => {
             success: 'RSS успешно загружен',
             errors: {
               'invalid url': 'Ссылка должна быть валидным URL',
-              'already exist': 'RSS уже существует',
+              'already exists': 'RSS уже существует',
             },
           },
         },
       },
     },
-  }));
-  promise.then((instance) => app(instance));
+  }).then(() => app(i18nextInstance));
 };
 
 export default runApp;
