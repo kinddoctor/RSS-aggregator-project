@@ -52,13 +52,13 @@ const handleValidationError = (error, i18nextInstance) => {
 const getRender = (i18nextInstance) => (path, value) => {
   const render = (pth, val) => {
     switch (pth) {
-      case 'addingRSSFeedProcess.state':
+      case 'addingForm.state':
         handleProcessState(val);
         break;
-      case 'addingRSSFeedProcess.validation.state':
+      case 'addingForm.validation.state':
         handleValidationState(val, i18nextInstance);
         break;
-      case 'addingRSSFeedProcess.validation.currentError':
+      case 'addingForm.validation.currentError':
         handleValidationError(val, i18nextInstance);
         break;
       default:

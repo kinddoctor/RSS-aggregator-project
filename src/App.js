@@ -1,14 +1,12 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
+import axios from 'axios';
 import { elements, makeStateWatched } from './View.js';
+import getNormalizedData from './Utils.js';
 
 const app = (i18nextInst) => {
   const initialState = {
-    addedRSSFeeds: [],
-    errors: {
-      allValidationErrors: [],
-    },
-    addingRSSFeedProcess: {
+    addingForm: {
       state: 'filling',
       value: '',
       validation: {
@@ -16,13 +14,28 @@ const app = (i18nextInst) => {
         currentError: '',
       },
     },
+    loadingProcess: {
+      state: '',
+      error: '',
+    },
+    parsingProcess: {
+      state: '',
+      error: '',
+    },
+    addedRSSLinks: [],
+    addedRSSData: { feeds: {}, posts: {} },
+    errors: {
+      allValidationErrors: [],
+      allLoadingErrors: [],
+      allParsingErrors: [],
+    },
   };
   const watchedState = makeStateWatched(initialState, i18nextInst);
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    watchedState.addingRSSFeedProcess.state = 'processing';
-    const urlString = watchedState.addingRSSFeedProcess.value;
+    watchedState.addingForm.state = 'processing';
+    const urlString = watchedState.addingForm.value;
     const promise = Promise.resolve(urlString);
     promise
       .then((url) => {
@@ -34,28 +47,43 @@ const app = (i18nextInst) => {
             url: 'invalid url',
           },
         });
-        const schema = yup.string().url().notOneOf(watchedState.addedRSSFeeds);
+        const schema = yup.string().url().notOneOf(watchedState.addedRSSLinks);
         return schema.validate(url);
       })
       .then((validUrl) => {
-        watchedState.addingRSSFeedProcess.state = 'processed';
-        watchedState.addingRSSFeedProcess.validation.state = 'valid';
-        watchedState.addedRSSFeeds.push(validUrl);
+        watchedState.addingForm.state = 'processed';
+        watchedState.addingForm.validation.state = 'valid';
+        watchedState.addedRSSLinks.push(validUrl);
+        return validUrl;
       })
       .catch((err) => {
         watchedState.errors.allValidationErrors.push(err.message);
-        watchedState.addingRSSFeedProcess.validation.currentError = '';
-        watchedState.addingRSSFeedProcess.validation.currentError = err.message;
-        watchedState.addingRSSFeedProcess.validation.state = 'unvalid';
-        watchedState.addingRSSFeedProcess.state = 'processed';
+        watchedState.addingForm.validation.currentError = '';
+        watchedState.addingForm.validation.currentError = err.message;
+        watchedState.addingForm.validation.state = 'unvalid';
+        watchedState.addingForm.state = 'processed';
+      })
+      .then((url) => {
+        const proxiedUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${url}`;
+        return axios.get(proxiedUrl);
+      })
+      .then(({ data }) => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
+        return xmlDoc;
+      })
+      .then((xml) => {
+        const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
+        console.log(`000${JSON.stringify(newFeed)}`);
+        console.log(`!!!${JSON.stringify(newPosts)}`);
       });
   };
 
   const handleChange = ({ target }) => {
     const url = target.value;
-    watchedState.addingRSSFeedProcess.value = url;
-    watchedState.addingRSSFeedProcess.state = 'filling';
-    watchedState.addingRSSFeedProcess.validation.state = null;
+    watchedState.addingForm.value = url;
+    watchedState.addingForm.state = 'filling';
+    watchedState.addingForm.validation.state = null;
   };
 
   elements.input.addEventListener('input', handleChange);
