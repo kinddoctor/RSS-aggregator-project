@@ -71,22 +71,25 @@ const app = (i18nextInst) => {
       })
       .catch((err) => {
         watchedState.errors.allLoadingErrors.push(err.message);
+        watchedState.loadingProcess.error = '';
         watchedState.loadingProcess.error = 'loading error';
         watchedState.loadingProcess.state = 'failed';
       })
       .then(({ data }) => {
         watchedState.loadingProcess.state = 'loaded';
+        watchedState.parsingProcess.state = 'parsing';
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
-        watchedState.parsingProcess.state = 'parsed';
         return xmlDoc;
       })
       .catch((err) => {
         watchedState.errors.allParsingErrors.push(err.message);
+        watchedState.parsingProcess.error = '';
         watchedState.parsingProcess.error = 'parsing error';
         watchedState.parsingProcess.state = 'failed';
       })
       .then((xml) => {
+        watchedState.parsingProcess.state = 'parsed';
         const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
         const { feeds, posts } = watchedState.addedRSSData;
         watchedState.addedRSSData.feeds = { ...feeds, newFeed };
@@ -125,6 +128,11 @@ const runApp = () => {
             success: 'RSS успешно загружен',
             errors: {
               'loading error': 'Ошибка сети',
+            },
+          },
+          parsing: {
+            errors: {
+              'parsing error': 'Ошибка обработки данных',
             },
           },
         },
