@@ -64,18 +64,33 @@ const app = (i18nextInst) => {
         watchedState.addingForm.state = 'processed';
       })
       .then((url) => {
-        const proxiedUrl = `https://allorigins.hexlet.app/get?disableCache=true&url=${url}`;
+        watchedState.loadingProcess.state = 'loading';
+        const proxyHTTPAddress = 'https://allorigins.hexlet.app/get?disableCache=true&url=';
+        const proxiedUrl = `${proxyHTTPAddress}${url}`;
         return axios.get(proxiedUrl);
       })
+      .catch((err) => {
+        watchedState.errors.allLoadingErrors.push(err.message);
+        watchedState.loadingProcess.error = err.message;
+        watchedState.loadingProcess.state = 'failed';
+      })
       .then(({ data }) => {
+        watchedState.loadingProcess.state = 'loaded';
         const parser = new DOMParser();
         const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
+        watchedState.parsingProcess.state = 'parsed';
         return xmlDoc;
+      })
+      .catch((err) => {
+        watchedState.errors.allParsingErrors.push(err.message);
+        watchedState.parsingProcess.error = err.message;
+        watchedState.parsingProcess.state = 'failed';
       })
       .then((xml) => {
         const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
-        console.log(`000${JSON.stringify(newFeed)}`);
-        console.log(`!!!${JSON.stringify(newPosts)}`);
+        const { feeds, posts } = watchedState.addedRSSData;
+        watchedState.addedRSSData.feeds = { ...feeds, newFeed };
+        watchedState.addedRSSData.posts = { ...posts, newPosts };
       });
   };
 
