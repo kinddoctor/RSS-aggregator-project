@@ -135,6 +135,8 @@ const runApp = () => {
               'parsing error': 'Ошибка обработки данных',
             },
           },
+          postsTitle: 'Посты',
+          feedsTitle: 'Фиды',
         },
       },
     },
