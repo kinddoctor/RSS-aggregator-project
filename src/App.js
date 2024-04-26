@@ -71,7 +71,7 @@ const app = (i18nextInst) => {
       })
       .catch((err) => {
         watchedState.errors.allLoadingErrors.push(err.message);
-        watchedState.loadingProcess.error = err.message;
+        watchedState.loadingProcess.error = 'loading error';
         watchedState.loadingProcess.state = 'failed';
       })
       .then(({ data }) => {
@@ -83,7 +83,7 @@ const app = (i18nextInst) => {
       })
       .catch((err) => {
         watchedState.errors.allParsingErrors.push(err.message);
-        watchedState.parsingProcess.error = err.message;
+        watchedState.parsingProcess.error = 'parsing error';
         watchedState.parsingProcess.state = 'failed';
       })
       .then((xml) => {
@@ -114,10 +114,17 @@ const runApp = () => {
       ru: {
         translation: {
           validation: {
-            success: 'RSS успешно загружен',
+            success: 'RSS добавлен',
             errors: {
               'invalid url': 'Ссылка должна быть валидным URL',
               'already exists': 'RSS уже существует',
+            },
+          },
+          loading: {
+            processing: 'Идет загрузка',
+            success: 'RSS успешно загружен',
+            errors: {
+              'loading error': 'Ошибка сети',
             },
           },
         },
