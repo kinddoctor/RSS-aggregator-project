@@ -92,8 +92,8 @@ const app = (i18nextInst) => {
         watchedState.parsingProcess.state = 'parsed';
         const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
         const { feeds, posts } = watchedState.addedRSSData;
-        watchedState.addedRSSData.feeds = { ...feeds, newFeed };
-        watchedState.addedRSSData.posts = { ...posts, newPosts };
+        watchedState.addedRSSData.feeds = { ...feeds, ...newFeed };
+        watchedState.addedRSSData.posts = { ...posts, ...newPosts };
       });
   };
 

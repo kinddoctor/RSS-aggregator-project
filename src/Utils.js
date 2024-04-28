@@ -14,7 +14,7 @@ const getNormalizedData = (xmlDoc) => {
   const feedDescription = getValueOfField(feedData, 'description');
   const feedUrl = getValueOfField(feedData, 'link');
   const feedId = getUniqueId();
-  const feed = {
+  const feedContent = {
     id: feedId,
     url: feedUrl,
     title: feedTitle,
@@ -34,11 +34,11 @@ const getNormalizedData = (xmlDoc) => {
       url: postUrl,
       title: postTitle,
     };
-    feed.postsIds.push(postId);
+    feedContent.postsIds.push(postId);
     return { ...acc, [postId]: post };
   }, {});
 
-  return { feed, posts };
+  return { feed: { [feedId]: feedContent }, posts };
 };
 
 export default getNormalizedData;
