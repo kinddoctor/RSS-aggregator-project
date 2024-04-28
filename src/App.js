@@ -1,8 +1,7 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
-import axios from 'axios';
 import { elements, makeStateWatched } from './View.js';
-import getNormalizedData from './Utils.js';
+import { getNormalizedData, loadDataFromUrl, parseData } from './Utils.js';
 
 const app = (i18nextInst) => {
   const initialState = {
@@ -32,6 +31,28 @@ const app = (i18nextInst) => {
   };
   const watchedState = makeStateWatched(initialState, i18nextInst);
 
+  const handleValidationError = (err) => {
+    watchedState.errors.allValidationErrors.push(err.message);
+    watchedState.addingForm.validation.currentError = '';
+    watchedState.addingForm.validation.currentError = err.message;
+    watchedState.addingForm.validation.state = 'unvalid';
+    watchedState.addingForm.state = 'processed';
+  };
+
+  const handleLoadingError = (err) => {
+    watchedState.errors.allLoadingErrors.push(err.message);
+    watchedState.loadingProcess.error = '';
+    watchedState.loadingProcess.error = 'loading error';
+    watchedState.loadingProcess.state = 'failed';
+  };
+
+  const handleParsingError = (err) => {
+    watchedState.errors.allParsingErrors.push(err.message);
+    watchedState.parsingProcess.error = '';
+    watchedState.parsingProcess.error = 'parsing error';
+    watchedState.parsingProcess.state = 'failed';
+  };
+
   const handleSubmit = (event) => {
     event.preventDefault();
     watchedState.addingForm.state = 'processing';
@@ -48,52 +69,39 @@ const app = (i18nextInst) => {
           },
         });
         const schema = yup.string().url().notOneOf(watchedState.addedRSSLinks);
-        return schema.validate(url);
-      })
-      .then((validUrl) => {
+        schema.validate(url);
         watchedState.addingForm.state = 'processed';
         watchedState.addingForm.validation.state = 'valid';
-        watchedState.addedRSSLinks.push(validUrl);
-        return validUrl;
-      })
-      .catch((err) => {
-        watchedState.errors.allValidationErrors.push(err.message);
-        watchedState.addingForm.validation.currentError = '';
-        watchedState.addingForm.validation.currentError = err.message;
-        watchedState.addingForm.validation.state = 'unvalid';
-        watchedState.addingForm.state = 'processed';
+        watchedState.addedRSSLinks.push(url);
+        return url;
       })
       .then((url) => {
         watchedState.loadingProcess.state = 'loading';
-        const proxyHTTPAddress = 'https://allorigins.hexlet.app/get?disableCache=true&url=';
-        const proxiedUrl = `${proxyHTTPAddress}${url}`;
-        return axios.get(proxiedUrl);
-      })
-      .catch((err) => {
-        watchedState.errors.allLoadingErrors.push(err.message);
-        watchedState.loadingProcess.error = '';
-        watchedState.loadingProcess.error = 'loading error';
-        watchedState.loadingProcess.state = 'failed';
+        return loadDataFromUrl(url);
       })
       .then(({ data }) => {
         watchedState.loadingProcess.state = 'loaded';
         watchedState.parsingProcess.state = 'parsing';
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(data.contents, 'text/xml');
-        return xmlDoc;
-      })
-      .catch((err) => {
-        watchedState.errors.allParsingErrors.push(err.message);
-        watchedState.parsingProcess.error = '';
-        watchedState.parsingProcess.error = 'parsing error';
-        watchedState.parsingProcess.state = 'failed';
-      })
-      .then((xml) => {
+        const xml = parseData(data);
+
         watchedState.parsingProcess.state = 'parsed';
         const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
         const { feeds, posts } = watchedState.addedRSSData;
         watchedState.addedRSSData.feeds = { ...feeds, ...newFeed };
         watchedState.addedRSSData.posts = { ...posts, ...newPosts };
+      })
+      .catch((err) => {
+        if (err.isAxiosError) {
+          return handleLoadingError(err);
+        }
+        switch (err.name) {
+          case 'ValidationError':
+            return handleValidationError(err);
+          case 'ParseError':
+            return handleParsingError(err);
+          default:
+            throw new Error(`Unknown error - ${err.message}!`);
+        }
       });
   };
 

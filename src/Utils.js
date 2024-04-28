@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const getValueOfField = (array, fieldName) => {
   const field = array.find((el) => el.nodeName === fieldName);
   return field.innerHTML;
@@ -41,4 +43,22 @@ const getNormalizedData = (xmlDoc) => {
   return { feed: { [feedId]: feedContent }, posts };
 };
 
-export default getNormalizedData;
+const loadDataFromUrl = (url) => {
+  const proxyHTTPAddress = 'https://allorigins.hexlet.app/get?disableCache=true&url=';
+  const proxiedUrl = `${proxyHTTPAddress}${url}`;
+  return axios.get(proxiedUrl);
+};
+
+const parseData = (data) => {
+  const parser = new DOMParser();
+  let parsedData;
+  try {
+    parsedData = parser.parseFromString(data.contents, 'text/xml');
+  } catch (e) {
+    e.name = 'ParseError';
+    throw e;
+  }
+  return parsedData;
+};
+
+export { getNormalizedData, loadDataFromUrl, parseData };
