@@ -69,13 +69,12 @@ const app = (i18nextInst) => {
           },
         });
         const schema = yup.string().url().notOneOf(watchedState.addedRSSLinks);
-        schema.validate(url);
+        return schema.validate(url);
+      })
+      .then((url) => {
         watchedState.addingForm.state = 'processed';
         watchedState.addingForm.validation.state = 'valid';
         watchedState.addedRSSLinks.push(url);
-        return url;
-      })
-      .then((url) => {
         watchedState.loadingProcess.state = 'loading';
         return loadDataFromUrl(url);
       })
