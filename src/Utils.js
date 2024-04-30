@@ -43,9 +43,14 @@ const getNormalizedData = (xmlDoc) => {
   return { feed: { [feedId]: feedContent }, posts };
 };
 
-const loadDataFromUrl = (url) => {
+const makeUrlProxied = (url) => {
   const proxyHTTPAddress = 'https://allorigins.hexlet.app/get?disableCache=true&url=';
   const proxiedUrl = `${proxyHTTPAddress}${url}`;
+  return proxiedUrl;
+};
+
+const loadDataFromUrl = (url) => {
+  const proxiedUrl = makeUrlProxied(url);
   return axios.get(proxiedUrl);
 };
 
@@ -61,4 +66,4 @@ const parseData = (data) => {
   return parsedData;
 };
 
-export { getNormalizedData, loadDataFromUrl, parseData };
+export { getNormalizedData, loadDataFromUrl, parseData, makeUrlProxied };
