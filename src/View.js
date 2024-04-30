@@ -100,6 +100,7 @@ const handleParsingState = (state) => {
 const displayPosts = (posts, i18nextInstance) => {
   const { title, list } = elements.posts;
   title.textContent = i18nextInstance.t('postsTitle');
+  list.innerHTML = '';
 
   const postsData = Object.values(posts);
   postsData.map((post) => {
@@ -115,6 +116,7 @@ const displayPosts = (posts, i18nextInstance) => {
 const displayFeeds = (feeds, i18nextInstance) => {
   const { title, list } = elements.feeds;
   title.textContent = i18nextInstance.t('feedsTitle');
+  list.innerHTML = '';
 
   const feedsData = Object.values(feeds);
   feedsData.map((feed) => {
