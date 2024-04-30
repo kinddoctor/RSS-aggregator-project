@@ -3,77 +3,74 @@ import i18next from 'i18next';
 import { elements, makeStateWatched } from './View.js';
 import { getNormalizedData, loadDataFromUrl, parseData } from './Utils.js';
 
+const initialState = {
+  form: {
+    state: 'filling',
+    value: '',
+    validation: {
+      state: null,
+      error: '',
+    },
+  },
+  loadingProcess: {
+    state: '',
+    error: '',
+  },
+  parsingProcess: {
+    state: '',
+    error: '',
+  },
+  addedRSSLinks: [],
+  addedRSSData: { feeds: {}, posts: {} },
+};
+
 const app = (i18nextInst) => {
-  const initialState = {
-    addingForm: {
-      state: 'filling',
-      value: '',
-      validation: {
-        state: null,
-        currentError: '',
-      },
-    },
-    loadingProcess: {
-      state: '',
-      error: '',
-    },
-    parsingProcess: {
-      state: '',
-      error: '',
-    },
-    addedRSSLinks: [],
-    addedRSSData: { feeds: {}, posts: {} },
-    errors: {
-      allValidationErrors: [],
-      allLoadingErrors: [],
-      allParsingErrors: [],
-    },
-  };
   const watchedState = makeStateWatched(initialState, i18nextInst);
 
   const handleValidationError = (err) => {
-    watchedState.errors.allValidationErrors.push(err.message);
-    watchedState.addingForm.validation.currentError = '';
-    watchedState.addingForm.validation.currentError = err.message;
-    watchedState.addingForm.validation.state = 'unvalid';
-    watchedState.addingForm.state = 'processed';
+    watchedState.form.validation.error = '';
+    watchedState.form.validation.error = err.message;
+    watchedState.form.validation.state = 'unvalid';
+    watchedState.form.state = 'processed';
   };
-
-  const handleLoadingError = (err) => {
-    watchedState.errors.allLoadingErrors.push(err.message);
-    watchedState.loadingProcess.error = '';
-    watchedState.loadingProcess.error = 'loading error';
-    watchedState.loadingProcess.state = 'failed';
+  const handleError = (err, process) => {
+    const stateField = `${process}Process`;
+    watchedState[stateField].error = '';
+    watchedState[stateField].error = `${process} error`;
+    watchedState[stateField].state = 'failed';
+    console.log(`Error - ${err.message}!`);
   };
-
-  const handleParsingError = (err) => {
-    watchedState.errors.allParsingErrors.push(err.message);
-    watchedState.parsingProcess.error = '';
-    watchedState.parsingProcess.error = 'parsing error';
-    watchedState.parsingProcess.state = 'failed';
+  const handleErrors = (err) => {
+    if (err.isAxiosError) {
+      return handleError(err, 'loading');
+    }
+    switch (err.name) {
+      case 'ValidationError':
+        return handleValidationError(err);
+      case 'ParseError':
+        return handleError(err, 'parsing');
+      default:
+        throw new Error(`Unknown error - ${err.message}!`);
+    }
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    watchedState.addingForm.state = 'processing';
-    const urlString = watchedState.addingForm.value;
+    watchedState.form.state = 'processing';
+    const urlString = watchedState.form.value;
     const promise = Promise.resolve(urlString);
     promise
       .then((url) => {
         yup.setLocale({
-          mixed: {
-            notOneOf: 'already exists',
-          },
-          string: {
-            url: 'invalid url',
-          },
+          mixed: { notOneOf: 'already exists' },
+          string: { url: 'invalid url' },
         });
         const schema = yup.string().url().notOneOf(watchedState.addedRSSLinks);
         return schema.validate(url);
       })
       .then((url) => {
-        watchedState.addingForm.state = 'processed';
-        watchedState.addingForm.validation.state = 'valid';
+        watchedState.form.state = 'processed';
+        watchedState.form.validation.state = 'valid';
         watchedState.addedRSSLinks.push(url);
         watchedState.loadingProcess.state = 'loading';
         return loadDataFromUrl(url);
@@ -90,25 +87,15 @@ const app = (i18nextInst) => {
         watchedState.addedRSSData.posts = { ...posts, ...newPosts };
       })
       .catch((err) => {
-        if (err.isAxiosError) {
-          return handleLoadingError(err);
-        }
-        switch (err.name) {
-          case 'ValidationError':
-            return handleValidationError(err);
-          case 'ParseError':
-            return handleParsingError(err);
-          default:
-            throw new Error(`Unknown error - ${err.message}!`);
-        }
+        handleErrors(err);
       });
   };
 
   const handleChange = ({ target }) => {
     const url = target.value;
-    watchedState.addingForm.value = url;
-    watchedState.addingForm.state = 'filling';
-    watchedState.addingForm.validation.state = null;
+    watchedState.form.value = url;
+    watchedState.form.state = 'filling';
+    watchedState.form.validation.state = null;
   };
 
   elements.input.addEventListener('input', handleChange);

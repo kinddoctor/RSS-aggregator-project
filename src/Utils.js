@@ -66,4 +66,9 @@ const parseData = (data) => {
   return parsedData;
 };
 
-export { getNormalizedData, loadDataFromUrl, parseData, makeUrlProxied };
+export {
+  getNormalizedData,
+  loadDataFromUrl,
+  parseData,
+  makeUrlProxied,
+};

@@ -132,13 +132,13 @@ const displayFeeds = (feeds, i18nextInstance) => {
 const getRender = (i18nextInstance) => (path, value) => {
   const render = (pth, val) => {
     switch (pth) {
-      case 'addingForm.state':
+      case 'form.state':
         handleFormState(val);
         break;
-      case 'addingForm.validation.state':
+      case 'form.validation.state':
         handleValidationState(val, i18nextInstance);
         break;
-      case 'addingForm.validation.currentError':
+      case 'form.validation.error':
         displayErrorText(val, 'validation', i18nextInstance);
         break;
       case 'loadingProcess.state':
