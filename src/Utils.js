@@ -66,8 +66,38 @@ const parseData = (data) => {
   return parsedData;
 };
 
+const getRenewedData = (oldData, newData) => {
+  const { feeds: feedsOldData, posts: postsOldData } = oldData;
+  const { feeds: feedsNewData, posts: postsNewData } = newData;
+  let renewedFeeds = {};
+  let renewedPosts = { ...postsOldData };
+
+  const oldFeeds = Object.values(feedsOldData);
+  const newFeeds = Object.values(feedsNewData);
+  const newPosts = Object.values(postsNewData);
+  oldFeeds.forEach((oldFeed) => {
+    const { url, id, postsIds } = oldFeed;
+    const newFeed = newFeeds.filter((feed) => feed.url === url)[0]; // data from new axios-request with the same url (as in oldFeed)
+    if (postsIds.length === newFeed.postsIds.length) {
+      renewedFeeds = { ...renewedFeeds, id: oldFeed };
+      return;
+    }
+    const oldFeedPostsTitles = postsIds.map((postId) => postsOldData[postId].title);
+    const newFeedPosts = newPosts.filter((post) => newFeed.postsIds.includes(post.id));
+    const postsToAdd = newFeedPosts.filter((post) => !oldFeedPostsTitles.includes(post.title));
+    postsToAdd.forEach((post) => {
+      postsIds.push(post.id);
+      const newPost = { ...post, feedId: id };
+      renewedPosts = { ...renewedPosts, [post.id]: newPost };
+    });
+    renewedFeeds = { ...renewedFeeds, id: oldFeed };
+  });
+  return { renewedFeeds, renewedPosts };
+};
+
 export {
   getNormalizedData,
+  getRenewedData,
   loadDataFromUrl,
   parseData,
   makeUrlProxied,

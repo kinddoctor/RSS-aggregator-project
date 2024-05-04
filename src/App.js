@@ -1,7 +1,7 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
 import { elements, makeStateWatched } from './View.js';
-import { getNormalizedData, loadDataFromUrl, parseData } from './Utils.js';
+import { getNormalizedData, getRenewedData, loadDataFromUrl, parseData } from './Utils.js';
 
 const initialState = {
   form: {
@@ -79,8 +79,8 @@ const app = (i18nextInst) => {
         watchedState.loadingProcess.state = 'loaded';
         watchedState.parsingProcess.state = 'parsing';
         const xml = parseData(data);
-
         watchedState.parsingProcess.state = 'parsed';
+
         const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
         const { feeds, posts } = watchedState.addedRSSData;
         watchedState.addedRSSData.feeds = { ...feeds, ...newFeed };
@@ -98,8 +98,34 @@ const app = (i18nextInst) => {
     watchedState.form.validation.state = null;
   };
 
+  const updatePostsList = (links) => {
+    if (links.length === 0) {
+      return setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000');
+    }
+    const newData = { feeds: {}, posts: {} };
+    const oldData = watchedState.addedRSSData;
+    const promises = links.map((link) => Promise.resolve(loadDataFromUrl(link)));
+    return Promise.all(promises)
+      .then((values) => {
+        values.forEach(({ data }) => {
+          const xml = parseData(data);
+          const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
+          newData.feeds = { ...newData.feeds, ...newFeed };
+          newData.posts = { ...newData.posts, ...newPosts };
+        });
+        const { renewedFeeds, renewedPosts } = getRenewedData(oldData, newData);
+        watchedState.addedRSSData.posts = { ...renewedPosts };
+        watchedState.addedRSSData.feeds = { ...renewedFeeds };
+      })
+      .catch((err) => {
+        handleErrors(err);
+      })
+      .finally(() => setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000'));
+  };
+
   elements.input.addEventListener('input', handleChange);
   elements.form.addEventListener('submit', handleSubmit);
+  updatePostsList(watchedState.addedRSSLinks);
 };
 
 const runApp = () => {
