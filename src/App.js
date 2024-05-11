@@ -1,30 +1,35 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
 import { elements, makeStateWatched } from './View.js';
-import { getNormalizedData, getRenewedData, loadDataFromUrl, parseData } from './Utils.js';
-
-const initialState = {
-  form: {
-    state: 'filling',
-    value: '',
-    validation: {
-      state: null,
-      error: '',
-    },
-  },
-  loadingProcess: {
-    state: '',
-    error: '',
-  },
-  parsingProcess: {
-    state: '',
-    error: '',
-  },
-  addedRSSLinks: [],
-  addedRSSData: { feeds: {}, posts: {} },
-};
+import {
+  getNormalizedData, getRenewedData,
+  loadDataFromUrl, parseData,
+} from './Utils.js';
 
 const app = (i18nextInst) => {
+  const initialState = {
+    form: {
+      state: 'filling',
+      value: '',
+      validation: {
+        state: null,
+        error: '',
+      },
+    },
+    loadingProcess: {
+      state: '',
+      error: '',
+    },
+    parsingProcess: {
+      state: '',
+      error: '',
+    },
+    addedRSSLinks: [],
+    addedRSSData: { feeds: {}, posts: {} },
+    UIstate: {
+      watchedPostsIds: [],
+    },
+  };
   const watchedState = makeStateWatched(initialState, i18nextInst);
 
   const handleValidationError = (err) => {
@@ -83,19 +88,27 @@ const app = (i18nextInst) => {
 
         const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
         const { feeds, posts } = watchedState.addedRSSData;
-        watchedState.addedRSSData.feeds = { ...feeds, ...newFeed };
         watchedState.addedRSSData.posts = { ...posts, ...newPosts };
+        watchedState.addedRSSData.feeds = { ...feeds, ...newFeed };
       })
       .catch((err) => {
         handleErrors(err);
       });
   };
 
-  const handleChange = ({ target }) => {
+  const handleInputChange = ({ target }) => {
     const url = target.value;
     watchedState.form.value = url;
     watchedState.form.state = 'filling';
     watchedState.form.validation.state = null;
+  };
+
+  const putDataIntoModal = (event) => {
+    const button = event.relatedTarget;
+    const postId = button.getAttribute('data-id');
+    const { title, description } = watchedState.addedRSSData.posts[postId];
+    elements.modalTitle.textContent = title;
+    elements.modalTextArea.textContent = description;
   };
 
   const updatePostsList = (links) => {
@@ -123,8 +136,9 @@ const app = (i18nextInst) => {
       .finally(() => setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000'));
   };
 
-  elements.input.addEventListener('input', handleChange);
+  elements.input.addEventListener('input', handleInputChange);
   elements.form.addEventListener('submit', handleSubmit);
+  elements.modal.addEventListener('show.bs.modal', putDataIntoModal);
   updatePostsList(watchedState.addedRSSLinks);
 };
 

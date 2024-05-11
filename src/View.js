@@ -1,6 +1,7 @@
 import onChange from 'on-change';
 
 const elements = {
+  body: document.querySelector('body'),
   form: document.querySelector('form'),
   input: document.querySelector('#url-input'),
   button: document.querySelector('button[type="submit"]'),
@@ -9,10 +10,14 @@ const elements = {
     title: document.querySelector('div.posts h2'),
     list: document.querySelector('div.posts ul'),
   },
+  postsButtons: document.querySelectorAll('button[data-id]'),
   feeds: {
     title: document.querySelector('div.feeds h2'),
     list: document.querySelector('div.feeds ul'),
   },
+  modal: document.querySelector('#modal'),
+  modalTitle: document.querySelector('.modal-title'),
+  modalTextArea: document.querySelector('.modal-body'),
 };
 
 const displayErrorText = (error, process, i18nextInstance) => {
@@ -104,14 +109,34 @@ const displayPosts = (posts, i18nextInstance) => {
 
   const postsData = Object.values(posts);
   postsData.map((post) => {
-    const { url, title: titleOfPost } = post;
+    const { url, title: titleOfPost, id } = post;
+    const a = `<a href="${url}" class="fw-bold" data-id="${id}" target="_blank" rel="noopener noreferrer">
+      ${titleOfPost}
+    </a>`;
+    const button = `<button
+    type="button" class="btn btn-outline-primary btn-sm" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal">
+    Просмотр
+    </button>`;
     const li = document.createElement('li');
     li.className = 'list-group-item d-flex justify-content-between align-items-start border-0 border-end-0';
-    const a = `<a href="${url}" class="fw-bold" data-id="21" target="_blank" rel="noopener noreferrer">${titleOfPost}</a>`;
-    li.innerHTML = a;
+    li.innerHTML = `${a}${button}`;
     return list.appendChild(li);
   });
 };
+
+/* const addClickHandlerToButtons = (handler) => {
+  const buttons = elements.postsButtons;
+  buttons.forEach((btn) => {
+    const id = btn.getAttribute('data-id');
+    btn.addEventListener('click', handler(id));
+  });
+};
+
+const makeWatchedPostPale = (ids) => {
+  const lastWatchedPostId = ids.at(ids.length - 1);
+  const lastWatchedPost = document.querySelector(`[data-id=${lastWatchedPostId}]`);
+  lastWatchedPost.className = 'fw-normal link-secondary';
+}; */
 
 const displayFeeds = (feeds, i18nextInstance) => {
   const { title, list } = elements.feeds;
@@ -158,6 +183,9 @@ const getRender = (i18nextInstance) => (path, value) => {
         break;
       case 'addedRSSData.feeds':
         displayFeeds(val, i18nextInstance);
+        break;
+      case 'UIstate.watchedPostsIds':
+        // makeWatchedPostPale(val);
         break;
       default:
         break;

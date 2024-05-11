@@ -28,6 +28,7 @@ const getNormalizedData = (xmlDoc) => {
   const posts = postsData.reduce((acc, item) => {
     const postData = Array.from(item.children);
     const postTitle = getValueOfField(postData, 'title');
+    const postDescription = getValueOfField(postData, 'description');
     const postUrl = getValueOfField(postData, 'link');
     const postId = getUniqueId();
     const post = {
@@ -35,6 +36,7 @@ const getNormalizedData = (xmlDoc) => {
       feedId,
       url: postUrl,
       title: postTitle,
+      description: postDescription,
     };
     feedContent.postsIds.push(postId);
     return { ...acc, [postId]: post };
