@@ -1,6 +1,6 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
-import { elements, makeStateWatched } from './View.js';
+import { elements, makeStateWatched, getButtonsClickHandler } from './View.js';
 import {
   getNormalizedData, getRenewedData,
   loadDataFromUrl, parseData,
@@ -55,7 +55,7 @@ const app = (i18nextInst) => {
       case 'ParseError':
         return handleError(err, 'parsing');
       default:
-        throw new Error(`Unknown error - ${err.message}!`);
+        throw err;
     }
   };
 
@@ -103,6 +103,10 @@ const app = (i18nextInst) => {
     watchedState.form.validation.state = null;
   };
 
+  const buttonsClickHandler = (id) => {
+    watchedState.UIstate.watchedPostsIds.push(id);
+  };
+
   const putDataIntoModal = (event) => {
     const button = event.relatedTarget;
     const postId = button.getAttribute('data-id');
@@ -136,6 +140,7 @@ const app = (i18nextInst) => {
       .finally(() => setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000'));
   };
 
+  getButtonsClickHandler(buttonsClickHandler);
   elements.input.addEventListener('input', handleInputChange);
   elements.form.addEventListener('submit', handleSubmit);
   elements.modal.addEventListener('show.bs.modal', putDataIntoModal);

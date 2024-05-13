@@ -10,7 +10,6 @@ const elements = {
     title: document.querySelector('div.posts h2'),
     list: document.querySelector('div.posts ul'),
   },
-  postsButtons: document.querySelectorAll('button[data-id]'),
   feeds: {
     title: document.querySelector('div.feeds h2'),
     list: document.querySelector('div.feeds ul'),
@@ -102,41 +101,49 @@ const handleParsingState = (state) => {
   }
 };
 
-const displayPosts = (posts, i18nextInstance) => {
+let buttonsClickHandler;
+
+const getButtonsClickHandler = (handler) => {
+  buttonsClickHandler = handler;
+};
+
+const displayPosts = (posts, i18nextInstance, state) => {
   const { title, list } = elements.posts;
   title.textContent = i18nextInstance.t('postsTitle');
   list.innerHTML = '';
 
+  const { UIstate: { watchedPostsIds } } = state;
   const postsData = Object.values(posts);
   postsData.map((post) => {
     const { url, title: titleOfPost, id } = post;
-    const a = `<a href="${url}" class="fw-bold" data-id="${id}" target="_blank" rel="noopener noreferrer">
+
+    const aClassName = watchedPostsIds.includes(id) ? 'fw-normal link-secondary' : 'fw-bold';
+    const a = `<a href="${url}" class=${aClassName} data-id="${id}" target="_blank" rel="noopener noreferrer">
       ${titleOfPost}
     </a>`;
     const button = `<button
     type="button" class="btn btn-outline-primary btn-sm" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal">
     Просмотр
     </button>`;
+
     const li = document.createElement('li');
     li.className = 'list-group-item d-flex justify-content-between align-items-start border-0 border-end-0';
     li.innerHTML = `${a}${button}`;
     return list.appendChild(li);
   });
-};
 
-/* const addClickHandlerToButtons = (handler) => {
-  const buttons = elements.postsButtons;
+  const buttons = document.querySelectorAll('li > button');
   buttons.forEach((btn) => {
     const id = btn.getAttribute('data-id');
-    btn.addEventListener('click', handler(id));
+    btn.addEventListener('click', () => buttonsClickHandler(id));
   });
 };
 
 const makeWatchedPostPale = (ids) => {
-  const lastWatchedPostId = ids.at(ids.length - 1);
-  const lastWatchedPost = document.querySelector(`[data-id=${lastWatchedPostId}]`);
+  const lastWatchedPostId = ids[ids.length - 1];
+  const lastWatchedPost = document.querySelector(`a[data-id="${lastWatchedPostId}"]`);
   lastWatchedPost.className = 'fw-normal link-secondary';
-}; */
+};
 
 const displayFeeds = (feeds, i18nextInstance) => {
   const { title, list } = elements.feeds;
@@ -154,7 +161,7 @@ const displayFeeds = (feeds, i18nextInstance) => {
   });
 };
 
-const getRender = (i18nextInstance) => (path, value) => {
+const getRender = (i18nextInstance, state) => (path, value) => {
   const render = (pth, val) => {
     switch (pth) {
       case 'form.state':
@@ -179,13 +186,13 @@ const getRender = (i18nextInstance) => (path, value) => {
         displayErrorText(val, 'parsing', i18nextInstance);
         break;
       case 'addedRSSData.posts':
-        displayPosts(val, i18nextInstance);
+        displayPosts(val, i18nextInstance, state);
         break;
       case 'addedRSSData.feeds':
         displayFeeds(val, i18nextInstance);
         break;
       case 'UIstate.watchedPostsIds':
-        // makeWatchedPostPale(val);
+        makeWatchedPostPale(val);
         break;
       default:
         break;
@@ -194,6 +201,6 @@ const getRender = (i18nextInstance) => (path, value) => {
   return render(path, value);
 };
 
-const makeStateWatched = (state, i18nextInst) => onChange(state, getRender(i18nextInst));
+const makeStateWatched = (state, i18nextInst) => onChange(state, getRender(i18nextInst, state));
 
-export { elements, makeStateWatched };
+export { elements, makeStateWatched, getButtonsClickHandler };
