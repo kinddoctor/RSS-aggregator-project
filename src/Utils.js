@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const getValueOfField = (array, fieldName) => {
   const field = array.find((el) => el.nodeName === fieldName);
-  return field.innerHTML;
+  return field.textContent;
 };
 
 const getUniqueId = () => Math.random().toString(36).substring(2, 6);
