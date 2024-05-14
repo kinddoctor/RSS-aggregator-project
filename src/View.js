@@ -2,6 +2,7 @@ import onChange from 'on-change';
 
 const elements = {
   body: document.querySelector('body'),
+  postsAndFeedsArea: document.querySelector('.container-xxl'),
   form: document.querySelector('form'),
   input: document.querySelector('#url-input'),
   button: document.querySelector('button[type="submit"]'),
@@ -101,12 +102,6 @@ const handleParsingState = (state) => {
   }
 };
 
-let buttonsClickHandler;
-
-const getButtonsClickHandler = (handler) => {
-  buttonsClickHandler = handler;
-};
-
 const displayPosts = (posts, i18nextInstance, state) => {
   const { title, list } = elements.posts;
   title.textContent = i18nextInstance.t('postsTitle');
@@ -130,12 +125,6 @@ const displayPosts = (posts, i18nextInstance, state) => {
     li.className = 'list-group-item d-flex justify-content-between align-items-start border-0 border-end-0';
     li.innerHTML = `${a}${button}`;
     return list.appendChild(li);
-  });
-
-  const buttons = document.querySelectorAll('li > button');
-  buttons.forEach((btn) => {
-    const id = btn.getAttribute('data-id');
-    btn.addEventListener('click', () => buttonsClickHandler(id));
   });
 };
 
@@ -203,4 +192,4 @@ const getRender = (i18nextInstance, state) => (path, value) => {
 
 const makeStateWatched = (state, i18nextInst) => onChange(state, getRender(i18nextInst, state));
 
-export { elements, makeStateWatched, getButtonsClickHandler };
+export { elements, makeStateWatched };
