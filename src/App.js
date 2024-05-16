@@ -6,30 +6,7 @@ import {
   loadDataFromUrl, parseData,
 } from './Utils.js';
 
-const app = (i18nextInst) => {
-  const initialState = {
-    form: {
-      state: 'filling',
-      value: '',
-      validation: {
-        state: null,
-        error: '',
-      },
-    },
-    loadingProcess: {
-      state: '',
-      error: '',
-    },
-    parsingProcess: {
-      state: '',
-      error: '',
-    },
-    addedRSSLinks: [],
-    addedRSSData: { feeds: {}, posts: {} },
-    UIstate: {
-      watchedPostsIds: [],
-    },
-  };
+const app = (initialState, i18nextInst) => {
   const watchedState = makeStateWatched(initialState, i18nextInst);
 
   const handleValidationError = (err) => {
@@ -76,11 +53,12 @@ const app = (i18nextInst) => {
       .then((url) => {
         watchedState.form.state = 'processed';
         watchedState.form.validation.state = 'valid';
-        watchedState.addedRSSLinks.push(url);
         watchedState.loadingProcess.state = 'loading';
         return loadDataFromUrl(url);
       })
       .then(({ data }) => {
+        const url = watchedState.form.value;
+        watchedState.addedRSSLinks.push(url);
         watchedState.loadingProcess.state = 'loaded';
         watchedState.parsingProcess.state = 'parsing';
         const xml = parseData(data);
@@ -152,6 +130,29 @@ const app = (i18nextInst) => {
 };
 
 const runApp = () => {
+  const initialState = {
+    form: {
+      state: 'filling',
+      value: '',
+      validation: {
+        state: null,
+        error: '',
+      },
+    },
+    loadingProcess: {
+      state: '',
+      error: '',
+    },
+    parsingProcess: {
+      state: '',
+      error: '',
+    },
+    addedRSSLinks: [],
+    addedRSSData: { feeds: {}, posts: {} },
+    UIstate: {
+      watchedPostsIds: [],
+    },
+  };
   const i18nextInstance = i18next.createInstance();
   i18nextInstance.init({
     lng: 'ru',
@@ -183,7 +184,7 @@ const runApp = () => {
         },
       },
     },
-  }).then(() => app(i18nextInstance));
+  }).then(() => app(initialState, i18nextInstance));
 };
 
 export default runApp;
