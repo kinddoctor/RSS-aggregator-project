@@ -112,18 +112,27 @@ const displayPosts = (posts, i18nextInstance, state) => {
   postsData.map((post) => {
     const { url, title: titleOfPost, id } = post;
 
+    const button = document.createElement('button');
+    const btnClassName = 'btn btn-outline-primary btn-sm';
+    button.className = btnClassName;
+    button.textContent = 'Просмотр';
+    button.setAttribute('type', 'button');
+    button.setAttribute('data-id', id);
+    button.setAttribute('data-bs-toggle', 'modal');
+    button.setAttribute('data-bs-target', '#modal');
+    const a = document.createElement('a');
     const aClassName = watchedPostsIds.includes(id) ? 'fw-normal link-secondary' : 'fw-bold';
-    const a = `<a href="${url}" class=${aClassName} data-id="${id}" target="_blank" rel="noopener noreferrer">
-      ${titleOfPost}
-    </a>`;
-    const button = `<button
-    type="button" class="btn btn-outline-primary btn-sm" data-id="${id}" data-bs-toggle="modal" data-bs-target="#modal">
-    Просмотр
-    </button>`;
+    a.className = aClassName;
+    a.textContent = titleOfPost;
+    a.setAttribute('href', url);
+    a.setAttribute('data-id', id);
+    a.setAttribute('rel', 'noopener noreferrer');
+    a.setAttribute('target', '_blank');
 
     const li = document.createElement('li');
     li.className = 'list-group-item d-flex justify-content-between align-items-start border-0 border-end-0';
-    li.innerHTML = `${a}${button}`;
+    li.append(a);
+    li.append(button);
     return list.appendChild(li);
   });
 };
