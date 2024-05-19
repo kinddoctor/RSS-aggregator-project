@@ -18,6 +18,7 @@ const elements = {
   modal: document.querySelector('#modal'),
   modalTitle: document.querySelector('.modal-title'),
   modalTextArea: document.querySelector('.modal-body'),
+  modalFullArticleButton: document.querySelector('.full-article'),
 };
 
 const displayErrorText = (error, process, i18nextInstance) => {
@@ -159,6 +160,13 @@ const displayFeeds = (feeds, i18nextInstance) => {
   });
 };
 
+const putDataIntoModal = (data) => {
+  const [title, description, url] = data;
+  elements.modalTitle.textContent = title;
+  elements.modalTextArea.textContent = description;
+  elements.modalFullArticleButton.setAttribute('href', url);
+};
+
 const getRender = (i18nextInstance, state) => (path, value) => {
   const render = (pth, val) => {
     switch (pth) {
@@ -191,6 +199,9 @@ const getRender = (i18nextInstance, state) => (path, value) => {
         break;
       case 'UIstate.watchedPostsIds':
         makeWatchedPostPale(val);
+        break;
+      case 'UIstate.modalData':
+        putDataIntoModal(val);
         break;
       default:
         break;

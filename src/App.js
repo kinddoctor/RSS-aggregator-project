@@ -89,12 +89,14 @@ const app = (initialState, i18nextInst) => {
     }
   };
 
-  const putDataIntoModal = (event) => {
+  const handleModal = (event) => {
     const button = event.relatedTarget;
     const postId = button.getAttribute('data-id');
-    const { title, description } = watchedState.addedRSSData.posts[postId];
-    elements.modalTitle.textContent = title;
-    elements.modalTextArea.textContent = description;
+    const { title, description, url } = watchedState.addedRSSData.posts[postId];
+    watchedState.UIstate.modalData = [];
+    watchedState.UIstate.modalData.push(title);
+    watchedState.UIstate.modalData.push(description);
+    watchedState.UIstate.modalData.push(url);
   };
 
   const updatePostsList = (links) => {
@@ -124,7 +126,7 @@ const app = (initialState, i18nextInst) => {
 
   elements.input.addEventListener('input', handleInputChange);
   elements.form.addEventListener('submit', handleSubmit);
-  elements.modal.addEventListener('show.bs.modal', putDataIntoModal);
+  elements.modal.addEventListener('show.bs.modal', handleModal);
   elements.postsAndFeedsArea.addEventListener('click', postsClickHandler);
   updatePostsList(watchedState.addedRSSLinks);
 };
@@ -151,6 +153,7 @@ const runApp = () => {
     addedRSSData: { feeds: {}, posts: {} },
     UIstate: {
       watchedPostsIds: [],
+      modalData: [], // title, description, postUrl
     },
   };
   const i18nextInstance = i18next.createInstance();
