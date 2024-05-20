@@ -21,85 +21,55 @@ const elements = {
   modalFullArticleButton: document.querySelector('.full-article'),
 };
 
-const displayErrorText = (error, process, i18nextInstance) => {
-  elements.feedback.textContent = i18nextInstance.t(`${process}.errors.${error}`);
+const displayPositiveFeedbackText = (type, i18nextInstance) => {
+  elements.feedback.textContent = i18nextInstance.t(`${type}`);
 };
 
-const displaySuccessFeedbackText = (process, i18nextInstance) => {
-  elements.feedback.textContent = i18nextInstance.t(`${process}.success`);
+const displayErrorFeedbackText = (error, i18nextInstance) => {
+  elements.feedback.textContent = i18nextInstance.t(`error.${error}`);
 };
 
-const dislayPositiveFeedbackAppearance = () => {
+const displayPositiveFeedbackAppearance = () => {
   elements.feedback.classList.remove('text-danger');
   elements.feedback.classList.add('text-success');
 };
 
-const dislayNegativeFeedbackAppearance = () => {
+const displayErrorFeedbackAppearance = () => {
   elements.feedback.classList.remove('text-success');
   elements.feedback.classList.add('text-danger');
 };
 
-const handleFormState = (processState) => {
-  switch (processState) {
+const handleState = (state, i18nextInstance) => {
+  switch (state) {
     case 'filling':
-      elements.feedback.textContent = '';
+      elements.button.classList.remove('disabled');
       elements.input.classList.remove('is-invalid');
+      elements.feedback.textContent = '';
       break;
-    case 'processing':
+    case 'validating':
       elements.button.classList.add('disabled');
       elements.input.setAttribute('disabled', '');
       break;
-    case 'processed':
-      elements.button.classList.remove('disabled');
+    case 'loading':
+      displayPositiveFeedbackAppearance();
+      displayPositiveFeedbackText('loadingProcess', i18nextInstance);
+      break;
+    case 'parsing':
+      break;
+    case 'success':
+      elements.form.reset();
+      elements.input.removeAttribute('disabled');
+      elements.input.focus();
+      displayPositiveFeedbackAppearance();
+      displayPositiveFeedbackText('success', i18nextInstance);
+      break;
+    case 'error':
+      displayErrorFeedbackAppearance();
       elements.input.removeAttribute('disabled');
       elements.input.focus();
       break;
     default:
-      throw new Error(`Unknown processState - ${processState}!`);
-  }
-};
-
-const handleValidationState = (state, i18nextInstance) => {
-  switch (state) {
-    case 'valid':
-      elements.form.reset();
-      dislayPositiveFeedbackAppearance();
-      displaySuccessFeedbackText('validation', i18nextInstance);
-      break;
-    case 'unvalid':
-      elements.input.classList.add('is-invalid');
-      dislayNegativeFeedbackAppearance();
-      break;
-    default:
-      break;
-  }
-};
-
-const handleLoadingState = (state, i18nextInstance) => {
-  switch (state) {
-    case 'loading':
-      elements.feedback.textContent = i18nextInstance.t('loading.processing');
-      break;
-    case 'loaded':
-      elements.feedback.textContent = i18nextInstance.t('loading.success');
-      break;
-    case 'failed':
-      dislayNegativeFeedbackAppearance();
-      break;
-    default:
-      break;
-  }
-};
-
-const handleParsingState = (state) => {
-  switch (state) {
-    case 'failed':
-      dislayNegativeFeedbackAppearance();
-      break;
-    case 'parsing':
-    case 'parsed':
-    default:
-      break;
+      throw new Error(`Unknown processState - ${state}!`);
   }
 };
 
@@ -170,26 +140,11 @@ const putDataIntoModal = (data) => {
 const getRender = (i18nextInstance, state) => (path, value) => {
   const render = (pth, val) => {
     switch (pth) {
-      case 'form.state':
-        handleFormState(val);
+      case 'state':
+        handleState(val, i18nextInstance);
         break;
-      case 'form.validation.state':
-        handleValidationState(val, i18nextInstance);
-        break;
-      case 'form.validation.error':
-        displayErrorText(val, 'validation', i18nextInstance);
-        break;
-      case 'loadingProcess.state':
-        handleLoadingState(val, i18nextInstance);
-        break;
-      case 'loadingProcess.error':
-        displayErrorText(val, 'loading', i18nextInstance);
-        break;
-      case 'parsingProcess.state':
-        handleParsingState(val);
-        break;
-      case 'parsingProcess.error':
-        displayErrorText(val, 'parsing', i18nextInstance);
+      case 'errorMessage':
+        displayErrorFeedbackText(val, i18nextInstance);
         break;
       case 'addedRSSData.posts':
         displayPosts(val, i18nextInstance, state);

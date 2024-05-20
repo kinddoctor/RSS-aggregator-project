@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+const hasRSS = (xml) => xml.children[0].localName === 'rss';
+
 const getValueOfField = (array, fieldName) => {
   const field = array.find((el) => el.nodeName === fieldName);
   return field.textContent;
@@ -51,7 +53,7 @@ const makeUrlProxied = (url) => {
   return proxiedUrl;
 };
 
-const loadDataFromUrl = (url) => {
+const loadData = (url) => {
   const proxiedUrl = makeUrlProxied(url);
   return axios.get(proxiedUrl);
 };
@@ -60,10 +62,9 @@ const parseData = (data) => {
   const parser = new DOMParser();
   let parsedData;
   try {
-    parsedData = parser.parseFromString(data.contents, 'text/xml');
+    parsedData = parser.parseFromString(data, 'text/xml');
   } catch (e) {
-    e.name = 'ParseError';
-    throw e;
+    throw new Error('Parsing Error');
   }
   return parsedData;
 };
@@ -81,7 +82,7 @@ const getRenewedData = (oldData, newData) => {
     const { url, id, postsIds } = oldFeed;
     const newFeed = newFeeds.filter((feed) => feed.url === url)[0]; // data from new axios-request with the same url (as in oldFeed)
     if (postsIds.length === newFeed.postsIds.length) {
-      renewedFeeds = { ...renewedFeeds, id: oldFeed };
+      renewedFeeds = { ...renewedFeeds, [id]: oldFeed };
       return;
     }
     const oldFeedPostsTitles = postsIds.map((postId) => postsOldData[postId].title);
@@ -92,15 +93,16 @@ const getRenewedData = (oldData, newData) => {
       const newPost = { ...post, feedId: id };
       renewedPosts = { ...renewedPosts, [post.id]: newPost };
     });
-    renewedFeeds = { ...renewedFeeds, id: oldFeed };
+    renewedFeeds = { ...renewedFeeds, [id]: oldFeed };
   });
   return { renewedFeeds, renewedPosts };
 };
 
 export {
+  hasRSS,
   getNormalizedData,
   getRenewedData,
-  loadDataFromUrl,
+  loadData,
   parseData,
   makeUrlProxied,
 };

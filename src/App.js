@@ -2,44 +2,30 @@ import * as yup from 'yup';
 import i18next from 'i18next';
 import { elements, makeStateWatched } from './View.js';
 import {
+  hasRSS, loadData, parseData,
   getNormalizedData, getRenewedData,
-  loadDataFromUrl, parseData,
 } from './Utils.js';
 
 const app = (initialState, i18nextInst) => {
   const watchedState = makeStateWatched(initialState, i18nextInst);
 
-  const handleValidationError = (err) => {
-    watchedState.form.validation.error = '';
-    watchedState.form.validation.error = err.message;
-    watchedState.form.validation.state = 'unvalid';
-    watchedState.form.state = 'processed';
-  };
-  const handleError = (err, process) => {
-    const stateField = `${process}Process`;
-    watchedState[stateField].error = '';
-    watchedState[stateField].error = `${process} error`;
-    watchedState[stateField].state = 'failed';
-    console.log(`Error - ${err.message}!`);
-  };
-  const handleErrors = (err) => {
-    if (err.isAxiosError) {
-      return handleError(err, 'loading');
-    }
-    switch (err.name) {
-      case 'ValidationError':
-        return handleValidationError(err);
-      case 'ParseError':
-        return handleError(err, 'parsing');
-      default:
-        throw err;
+  const handleError = ({ message }) => {
+    watchedState.state = 'error';
+    const expectedErrorMessages = [
+      'Network Error', 'Parsing Error', 'doesn`t has rss', 'invalid url', 'already exists',
+    ];
+    if (expectedErrorMessages.includes(message)) {
+      watchedState.errorMessage = '';
+      watchedState.errorMessage = message.toLowerCase();
+    } else {
+      console.log(`Unexpected error - ${message}`);
     }
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    watchedState.form.state = 'processing';
-    const urlString = watchedState.form.value;
+    watchedState.state = 'validating';
+    const urlString = watchedState.inputValue;
     const promise = Promise.resolve(urlString);
     promise
       .then((url) => {
@@ -51,37 +37,35 @@ const app = (initialState, i18nextInst) => {
         return schema.validate(url);
       })
       .then((url) => {
-        watchedState.form.state = 'processed';
-        watchedState.form.validation.state = 'valid';
-        watchedState.loadingProcess.state = 'loading';
-        return loadDataFromUrl(url);
+        watchedState.state = 'loading';
+        return loadData(url);
       })
       .then(({ data }) => {
-        const url = watchedState.form.value;
+        const url = watchedState.inputValue;
+        watchedState.state = 'parsing';
+        const xml = parseData(data.contents);
+        if (!hasRSS(xml)) {
+          throw new Error('doesn`t has rss');
+        }
         watchedState.addedRSSLinks.push(url);
-        watchedState.loadingProcess.state = 'loaded';
-        watchedState.parsingProcess.state = 'parsing';
-        const xml = parseData(data);
-        watchedState.parsingProcess.state = 'parsed';
-
+        watchedState.state = 'success';
         const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
         const { feeds, posts } = watchedState.addedRSSData;
         watchedState.addedRSSData.posts = { ...posts, ...newPosts };
         watchedState.addedRSSData.feeds = { ...feeds, ...newFeed };
       })
       .catch((err) => {
-        handleErrors(err);
+        handleError(err);
       });
   };
 
   const handleInputChange = ({ target }) => {
     const url = target.value;
-    watchedState.form.value = url;
-    watchedState.form.state = 'filling';
-    watchedState.form.validation.state = null;
+    watchedState.inputValue = url;
+    watchedState.state = 'filling';
   };
 
-  const postsClickHandler = (e) => {
+  const handlePostsClick = (e) => {
     const linkOrBtnElement = e.target.hasAttribute('data-id');
     if (linkOrBtnElement) {
       const id = e.target.getAttribute('data-id');
@@ -94,9 +78,7 @@ const app = (initialState, i18nextInst) => {
     const postId = button.getAttribute('data-id');
     const { title, description, url } = watchedState.addedRSSData.posts[postId];
     watchedState.UIstate.modalData = [];
-    watchedState.UIstate.modalData.push(title);
-    watchedState.UIstate.modalData.push(description);
-    watchedState.UIstate.modalData.push(url);
+    watchedState.UIstate.modalData.push(title, description, url);
   };
 
   const updatePostsList = (links) => {
@@ -105,11 +87,11 @@ const app = (initialState, i18nextInst) => {
     }
     const newData = { feeds: {}, posts: {} };
     const oldData = watchedState.addedRSSData;
-    const promises = links.map((link) => Promise.resolve(loadDataFromUrl(link)));
+    const promises = links.map((link) => Promise.resolve(loadData(link)));
     return Promise.all(promises)
       .then((values) => {
         values.forEach(({ data }) => {
-          const xml = parseData(data);
+          const xml = parseData(data.contents);
           const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
           newData.feeds = { ...newData.feeds, ...newFeed };
           newData.posts = { ...newData.posts, ...newPosts };
@@ -119,7 +101,7 @@ const app = (initialState, i18nextInst) => {
         watchedState.addedRSSData.feeds = { ...renewedFeeds };
       })
       .catch((err) => {
-        handleErrors(err);
+        handleError(err);
       })
       .finally(() => setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000'));
   };
@@ -127,28 +109,15 @@ const app = (initialState, i18nextInst) => {
   elements.input.addEventListener('input', handleInputChange);
   elements.form.addEventListener('submit', handleSubmit);
   elements.modal.addEventListener('show.bs.modal', handleModal);
-  elements.postsAndFeedsArea.addEventListener('click', postsClickHandler);
+  elements.postsAndFeedsArea.addEventListener('click', handlePostsClick);
   updatePostsList(watchedState.addedRSSLinks);
 };
 
 const runApp = () => {
   const initialState = {
-    form: {
-      state: 'filling',
-      value: '',
-      validation: {
-        state: null,
-        error: '',
-      },
-    },
-    loadingProcess: {
-      state: '',
-      error: '',
-    },
-    parsingProcess: {
-      state: '',
-      error: '',
-    },
+    state: '',
+    errorMessage: '',
+    inputValue: '',
     addedRSSLinks: [],
     addedRSSData: { feeds: {}, posts: {} },
     UIstate: {
@@ -163,25 +132,15 @@ const runApp = () => {
     resources: {
       ru: {
         translation: {
-          validation: {
-            success: 'RSS добавлен',
-            errors: {
-              'invalid url': 'Ссылка должна быть валидным URL',
-              'already exists': 'RSS уже существует',
-            },
+          error: {
+            'invalid url': 'Ссылка должна быть валидным URL',
+            'already exists': 'RSS уже существует',
+            'network error': 'Ошибка сети',
+            'doesn`t has rss': 'Ресурс не содержит валидный RSS',
+            'parsing error': 'Ошибка обработки данных',
           },
-          loading: {
-            processing: 'Идет загрузка',
-            success: 'RSS успешно загружен',
-            errors: {
-              'loading error': 'Ошибка сети',
-            },
-          },
-          parsing: {
-            errors: {
-              'parsing error': 'Ошибка обработки данных',
-            },
-          },
+          loadingProcess: 'Идет загрузка',
+          success: 'RSS успешно загружен',
           postsTitle: 'Посты',
           feedsTitle: 'Фиды',
         },
