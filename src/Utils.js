@@ -80,7 +80,8 @@ const getRenewedData = (oldData, newData) => {
   const newPosts = Object.values(postsNewData);
   oldFeeds.forEach((oldFeed) => {
     const { url, id, postsIds } = oldFeed;
-    const newFeed = newFeeds.filter((feed) => feed.url === url)[0]; // data from new axios-request with the same url (as in oldFeed)
+    // data from new axios-request with the same url (as in oldFeed)
+    const newFeed = newFeeds.filter((feed) => feed.url === url)[0];
     if (postsIds.length === newFeed.postsIds.length) {
       renewedFeeds = { ...renewedFeeds, [id]: oldFeed };
       return;
