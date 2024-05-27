@@ -26,6 +26,10 @@ const displayPositiveFeedbackText = (type, i18nextInstance) => {
 };
 
 const displayErrorFeedbackText = (error, i18nextInstance) => {
+  if (error.startsWith('Unexpected')) {
+    elements.feedback.textContent = i18nextInstance.t('unexpectedError', { error: `${error}` });
+    return;
+  }
   elements.feedback.textContent = i18nextInstance.t(`error.${error}`);
 };
 

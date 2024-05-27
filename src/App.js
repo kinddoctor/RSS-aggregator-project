@@ -18,24 +18,24 @@ const app = (initialState, i18nextInst) => {
       watchedState.errorMessage = '';
       watchedState.errorMessage = message.toLowerCase();
     } else {
-      console.log(`Unexpected error - ${message}`);
+      watchedState.errorMessage = `Unexpected error - ${message}`;
     }
+  };
+
+  const validate = (url) => {
+    yup.setLocale({
+      mixed: { notOneOf: 'already exists' },
+      string: { url: 'invalid url' },
+    });
+    const schema = yup.string().url().notOneOf(watchedState.addedRSSLinks);
+    return schema.validate(url);
   };
 
   const handleSubmit = (event) => {
     event.preventDefault();
     watchedState.state = 'validating';
     const urlString = watchedState.inputValue;
-    const promise = Promise.resolve(urlString);
-    promise
-      .then((url) => {
-        yup.setLocale({
-          mixed: { notOneOf: 'already exists' },
-          string: { url: 'invalid url' },
-        });
-        const schema = yup.string().url().notOneOf(watchedState.addedRSSLinks);
-        return schema.validate(url);
-      })
+    validate(urlString)
       .then((url) => {
         watchedState.state = 'loading';
         return loadData(url);
@@ -115,7 +115,7 @@ const app = (initialState, i18nextInst) => {
 
 const runApp = () => {
   const initialState = {
-    state: '',
+    state: 'initialState',
     errorMessage: '',
     inputValue: '',
     addedRSSLinks: [],
@@ -139,6 +139,7 @@ const runApp = () => {
             'doesn`t has rss': 'Ресурс не содержит валидный RSS',
             'parsing error': 'Ошибка обработки данных',
           },
+          unexpectedError: '{{error}}',
           loadingProcess: 'Идет загрузка',
           success: 'RSS успешно загружен',
           postsTitle: 'Посты',
