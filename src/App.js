@@ -1,13 +1,33 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
-import { elements, makeStateWatched } from './View.js';
+import makeStateWatched from './View.js';
 import {
   hasRSS, loadData, parseData,
   getNormalizedData, getRenewedData,
 } from './Utils.js';
 
 const app = (initialState, i18nextInst) => {
-  const watchedState = makeStateWatched(initialState, i18nextInst);
+  const UIelements = {
+    body: document.querySelector('body'),
+    postsAndFeedsArea: document.querySelector('.container-xxl'),
+    form: document.querySelector('form'),
+    input: document.querySelector('#url-input'),
+    button: document.querySelector('button[type="submit"]'),
+    feedback: document.querySelector('.feedback'),
+    posts: {
+      title: document.querySelector('div.posts h2'),
+      list: document.querySelector('div.posts ul'),
+    },
+    feeds: {
+      title: document.querySelector('div.feeds h2'),
+      list: document.querySelector('div.feeds ul'),
+    },
+    modal: document.querySelector('#modal'),
+    modalTitle: document.querySelector('.modal-title'),
+    modalTextArea: document.querySelector('.modal-body'),
+    modalFullArticleButton: document.querySelector('.full-article'),
+  };
+  const watchedState = makeStateWatched(initialState, UIelements, i18nextInst);
 
   const handleError = ({ message }) => {
     watchedState.state = 'error';
@@ -106,10 +126,10 @@ const app = (initialState, i18nextInst) => {
       .finally(() => setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000'));
   };
 
-  elements.input.addEventListener('input', handleInputChange);
-  elements.form.addEventListener('submit', handleSubmit);
-  elements.modal.addEventListener('show.bs.modal', handleModal);
-  elements.postsAndFeedsArea.addEventListener('click', handlePostsClick);
+  UIelements.input.addEventListener('input', handleInputChange);
+  UIelements.form.addEventListener('submit', handleSubmit);
+  UIelements.modal.addEventListener('show.bs.modal', handleModal);
+  UIelements.postsAndFeedsArea.addEventListener('click', handlePostsClick);
   updatePostsList(watchedState.addedRSSLinks);
 };
 

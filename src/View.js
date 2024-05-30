@@ -1,84 +1,70 @@
 import onChange from 'on-change';
 
-const elements = {
-  body: document.querySelector('body'),
-  postsAndFeedsArea: document.querySelector('.container-xxl'),
-  form: document.querySelector('form'),
-  input: document.querySelector('#url-input'),
-  button: document.querySelector('button[type="submit"]'),
-  feedback: document.querySelector('.feedback'),
-  posts: {
-    title: document.querySelector('div.posts h2'),
-    list: document.querySelector('div.posts ul'),
-  },
-  feeds: {
-    title: document.querySelector('div.feeds h2'),
-    list: document.querySelector('div.feeds ul'),
-  },
-  modal: document.querySelector('#modal'),
-  modalTitle: document.querySelector('.modal-title'),
-  modalTextArea: document.querySelector('.modal-body'),
-  modalFullArticleButton: document.querySelector('.full-article'),
+const displayPositiveFeedbackAppearance = ({ feedback }) => {
+  feedback.classList.remove('text-danger');
+  feedback.classList.add('text-success');
 };
 
-const displayPositiveFeedbackText = (type, i18nextInstance) => {
-  elements.feedback.textContent = i18nextInstance.t(`${type}`);
+const displayErrorFeedbackAppearance = ({ feedback }) => {
+  feedback.classList.remove('text-success');
+  feedback.classList.add('text-danger');
 };
 
-const displayErrorFeedbackText = (error, i18nextInstance) => {
+const displayPositiveFeedbackText = (type, UIelements, i18nextInstance) => {
+  const { feedback } = UIelements;
+  feedback.textContent = i18nextInstance.t(`${type}`);
+};
+
+const displayErrorFeedbackText = (error, UIelements, i18nextInstance) => {
+  const { feedback } = UIelements;
   if (error.startsWith('Unexpected')) {
-    elements.feedback.textContent = i18nextInstance.t('unexpectedError', { error: `${error}` });
+    feedback.textContent = i18nextInstance.t('unexpectedError', { error: `${error}` });
     return;
   }
-  elements.feedback.textContent = i18nextInstance.t(`error.${error}`);
+  feedback.textContent = i18nextInstance.t(`error.${error}`);
 };
 
-const displayPositiveFeedbackAppearance = () => {
-  elements.feedback.classList.remove('text-danger');
-  elements.feedback.classList.add('text-success');
-};
+const handleState = (state, UIelements, i18nextInstance) => {
+  const {
+    form, button,
+    input, feedback,
+  } = UIelements;
 
-const displayErrorFeedbackAppearance = () => {
-  elements.feedback.classList.remove('text-success');
-  elements.feedback.classList.add('text-danger');
-};
-
-const handleState = (state, i18nextInstance) => {
   switch (state) {
     case 'filling':
-      elements.button.classList.remove('disabled');
-      elements.input.classList.remove('is-invalid');
-      elements.feedback.textContent = '';
+      button.classList.remove('disabled');
+      input.classList.remove('is-invalid');
+      feedback.textContent = '';
       break;
     case 'validating':
-      elements.button.classList.add('disabled');
-      elements.input.setAttribute('disabled', '');
+      button.classList.add('disabled');
+      input.setAttribute('disabled', '');
       break;
     case 'loading':
-      displayPositiveFeedbackAppearance();
-      displayPositiveFeedbackText('loadingProcess', i18nextInstance);
+      displayPositiveFeedbackAppearance(UIelements);
+      displayPositiveFeedbackText('loadingProcess', UIelements, i18nextInstance);
       break;
     case 'parsing':
       break;
     case 'success':
-      elements.form.reset();
-      elements.input.removeAttribute('disabled');
-      elements.input.focus();
-      displayPositiveFeedbackAppearance();
-      displayPositiveFeedbackText('success', i18nextInstance);
+      form.reset();
+      input.removeAttribute('disabled');
+      input.focus();
+      displayPositiveFeedbackAppearance(UIelements);
+      displayPositiveFeedbackText('success', UIelements, i18nextInstance);
       break;
     case 'error':
-      displayErrorFeedbackAppearance();
-      elements.input.removeAttribute('disabled');
-      elements.input.focus();
+      displayErrorFeedbackAppearance(UIelements);
+      input.removeAttribute('disabled');
+      input.focus();
       break;
     default:
       throw new Error(`Unknown processState - ${state}!`);
   }
 };
 
-const displayPosts = (posts, i18nextInstance, state) => {
-  const { title, list } = elements.posts;
+const displayPosts = (posts, state, UIelements, i18nextInstance) => {
+  const { posts: { title, list } } = UIelements;
   title.textContent = i18nextInstance.t('postsTitle');
   list.innerHTML = '';
 
@@ -118,8 +104,8 @@ const makeWatchedPostPale = (ids) => {
   lastWatchedPost.className = 'fw-normal link-secondary';
 };
 
-const displayFeeds = (feeds, i18nextInstance) => {
-  const { title, list } = elements.feeds;
+const displayFeeds = (feeds, UIelements, i18nextInstance) => {
+  const { feeds: { title, list } } = UIelements;
   title.textContent = i18nextInstance.t('feedsTitle');
   list.innerHTML = '';
 
@@ -134,33 +120,34 @@ const displayFeeds = (feeds, i18nextInstance) => {
   });
 };
 
-const putDataIntoModal = (data) => {
+const putDataIntoModal = (data, UIelements) => {
   const [title, description, url] = data;
-  elements.modalTitle.textContent = title;
-  elements.modalTextArea.textContent = description;
-  elements.modalFullArticleButton.setAttribute('href', url);
+  const { modalTitle, modalTextArea, modalFullArticleButton } = UIelements;
+  modalTitle.textContent = title;
+  modalTextArea.textContent = description;
+  modalFullArticleButton.setAttribute('href', url);
 };
 
-const getRender = (i18nextInstance, state) => (path, value) => {
+const getRender = (state, UIelements, i18nextInstance) => (path, value) => {
   const render = (pth, val) => {
     switch (pth) {
       case 'state':
-        handleState(val, i18nextInstance);
+        handleState(val, UIelements, i18nextInstance);
         break;
       case 'errorMessage':
-        displayErrorFeedbackText(val, i18nextInstance);
+        displayErrorFeedbackText(val, UIelements, i18nextInstance);
         break;
       case 'addedRSSData.posts':
-        displayPosts(val, i18nextInstance, state);
+        displayPosts(val, state, UIelements, i18nextInstance);
         break;
       case 'addedRSSData.feeds':
-        displayFeeds(val, i18nextInstance);
+        displayFeeds(val, UIelements, i18nextInstance);
         break;
       case 'UIstate.watchedPostsIds':
         makeWatchedPostPale(val);
         break;
       case 'UIstate.modalData':
-        putDataIntoModal(val);
+        putDataIntoModal(val, UIelements);
         break;
       default:
         break;
@@ -169,6 +156,6 @@ const getRender = (i18nextInstance, state) => (path, value) => {
   return render(path, value);
 };
 
-const makeStateWatched = (state, i18nextInst) => onChange(state, getRender(i18nextInst, state));
+const makeStateWatched = (state, UIelements, i18nextInst) => onChange(state, getRender(state, UIelements, i18nextInst));
 
-export { elements, makeStateWatched };
+export default makeStateWatched;
