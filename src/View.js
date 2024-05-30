@@ -156,6 +156,8 @@ const getRender = (state, UIelements, i18nextInstance) => (path, value) => {
   return render(path, value);
 };
 
-const makeStateWatched = (state, UIelements, i18nextInst) => onChange(state, getRender(state, UIelements, i18nextInst));
+const makeStateWatched = (state, UIelements, i18nextInst) => {
+  onChange(state, getRender(state, UIelements, i18nextInst));
+};
 
 export default makeStateWatched;
