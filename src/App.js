@@ -2,7 +2,7 @@ import * as yup from 'yup';
 import i18next from 'i18next';
 import makeStateWatched from './View.js';
 import {
-  hasRSS, loadData, parseData,
+  getUniqueId, loadData, parseData,
   getNormalizedData, getRenewedData,
 } from './Utils.js';
 
@@ -63,16 +63,18 @@ const app = (initialState, i18nextInst) => {
       .then(({ data }) => {
         const url = watchedState.inputValue;
         watchedState.state = 'parsing';
-        const xml = parseData(data.contents);
-        if (!hasRSS(xml)) {
-          throw new Error('doesn`t has rss');
-        }
+        const { feed: newFeed, posts: newPosts } = parseData(data.contents);
         watchedState.addedRSSLinks.push(url);
         watchedState.state = 'success';
-        const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
+        const feedId = getUniqueId();
+        newFeed.feedId = feedId;
+        newPosts.forEach((post) => {
+          const postWithFeedId = { ...post, feedId };
+          return postWithFeedId;
+        });
         const { feeds, posts } = watchedState.addedRSSData;
-        watchedState.addedRSSData.posts = { ...posts, ...newPosts };
-        watchedState.addedRSSData.feeds = { ...feeds, ...newFeed };
+        watchedState.addedRSSData.posts = [...posts, ...newPosts];
+        watchedState.addedRSSData.feeds = [...feeds, ...newFeed];
       })
       .catch((err) => {
         handleError(err);
@@ -80,6 +82,7 @@ const app = (initialState, i18nextInst) => {
   };
 
   const handleInputChange = ({ target }) => {
+    console.log(`${JSON.stringify(watchedState)}`);
     const url = target.value;
     watchedState.inputValue = url;
     watchedState.state = 'filling';
@@ -139,7 +142,7 @@ const runApp = () => {
     errorMessage: '',
     inputValue: '',
     addedRSSLinks: [],
-    addedRSSData: { feeds: {}, posts: {} },
+    addedRSSData: { feeds: [], posts: [] },
     UIstate: {
       watchedPostsIds: [],
       modalData: [], // title, description, postUrl

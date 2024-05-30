@@ -1,51 +1,8 @@
 import axios from 'axios';
 
-const hasRSS = (xml) => xml.children[0].localName === 'rss';
-
-const getValueOfField = (array, fieldName) => {
-  const field = array.find((el) => el.nodeName === fieldName);
-  return field.textContent;
-};
-
 const getUniqueId = () => Math.random().toString(36).substring(2, 6);
 
-const getNormalizedData = (xmlDoc) => {
-  const rss = xmlDoc.children[0];
-  const channel = rss.children[0];
-
-  const feedData = Array.from(channel.children);
-  const feedTitle = getValueOfField(feedData, 'title');
-  const feedDescription = getValueOfField(feedData, 'description');
-  const feedUrl = getValueOfField(feedData, 'link');
-  const feedId = getUniqueId();
-  const feedContent = {
-    id: feedId,
-    url: feedUrl,
-    title: feedTitle,
-    description: feedDescription,
-    postsIds: [],
-  };
-
-  const postsData = feedData.filter((el) => el.nodeName === 'item');
-  const posts = postsData.reduce((acc, item) => {
-    const postData = Array.from(item.children);
-    const postTitle = getValueOfField(postData, 'title');
-    const postDescription = getValueOfField(postData, 'description');
-    const postUrl = getValueOfField(postData, 'link');
-    const postId = getUniqueId();
-    const post = {
-      id: postId,
-      feedId,
-      url: postUrl,
-      title: postTitle,
-      description: postDescription,
-    };
-    feedContent.postsIds.push(postId);
-    return { ...acc, [postId]: post };
-  }, {});
-
-  return { feed: { [feedId]: feedContent }, posts };
-};
+const hasRSS = (xml) => xml.children[0].localName === 'rss';
 
 const makeUrlProxied = (url) => {
   const proxyHTTPAddress = 'https://allorigins.hexlet.app/get?disableCache=true&url=';
@@ -58,15 +15,55 @@ const loadData = (url) => {
   return axios.get(proxiedUrl);
 };
 
+const getValueOfField = (array, fieldName) => {
+  const field = array.find((el) => el.nodeName === fieldName);
+  return field.textContent;
+};
+
+const getNormalizedData = (xmlDoc) => {
+  const rss = xmlDoc.children[0];
+  const channel = rss.children[0];
+
+  const feedData = Array.from(channel.children);
+  const feedUrl = getValueOfField(feedData, 'link');
+  const feedTitle = getValueOfField(feedData, 'title');
+  const feedDescription = getValueOfField(feedData, 'description');
+  const feed = {
+    url: feedUrl,
+    title: feedTitle,
+    description: feedDescription,
+  };
+
+  const postsData = feedData.filter((el) => el.nodeName === 'item');
+  const posts = postsData.reduce((acc, item) => {
+    const postData = Array.from(item.children);
+    const postUrl = getValueOfField(postData, 'link');
+    const postTitle = getValueOfField(postData, 'title');
+    const postDescription = getValueOfField(postData, 'description');
+    const post = {
+      url: postUrl,
+      title: postTitle,
+      description: postDescription,
+    };
+    return [...acc, ...post];
+  }, []);
+
+  return { feed, posts };
+};
+
 const parseData = (data) => {
   const parser = new DOMParser();
-  let parsedData;
+  let normalizedData;
   try {
-    parsedData = parser.parseFromString(data, 'text/xml');
+    const parsedData = parser.parseFromString(data, 'text/xml');
+    if (!hasRSS(parsedData)) {
+      throw new Error('doesn`t has rss');
+    }
+    normalizedData = getNormalizedData(parsedData);
   } catch (e) {
     throw new Error('Parsing Error');
   }
-  return parsedData;
+  return normalizedData;
 };
 
 const getRenewedData = (oldData, newData) => {
@@ -100,7 +97,7 @@ const getRenewedData = (oldData, newData) => {
 };
 
 export {
-  hasRSS,
+  getUniqueId,
   getNormalizedData,
   getRenewedData,
   loadData,

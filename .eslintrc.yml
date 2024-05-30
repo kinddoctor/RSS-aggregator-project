@@ -10,5 +10,5 @@ parserOptions:
 rules: {
   no-console: 0,
   import/extensions: 0,
-  max-len: ['error', {'code': 100, 'ignoreComments': true}],
+  max-len: ['error', {'code': 120, 'ignoreComments': true}],
 }
