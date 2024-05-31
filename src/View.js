@@ -121,7 +121,7 @@ const displayFeeds = (feeds, UIelements, i18nextInstance) => {
 };
 
 const putDataIntoModal = (data, UIelements) => {
-  const [title, description, url] = data;
+  const { title, description, url } = data;
   const { modalTitle, modalTextArea, modalFullArticleButton } = UIelements;
   modalTitle.textContent = title;
   modalTextArea.textContent = description;

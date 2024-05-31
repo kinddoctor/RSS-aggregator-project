@@ -69,12 +69,9 @@ const app = (initialState, i18nextInst) => {
         watchedState.state = 'success';
         const feedId = getUniqueId();
         newFeed.id = feedId;
-        newPosts.forEach((post) => {
-          const postWithFeedId = { ...post, feedId };
-          return postWithFeedId;
-        });
         const { feeds, posts } = watchedState.addedRSSData;
-        watchedState.addedRSSData.posts = [...posts, ...newPosts];
+        const newPostsFulfilled = newPosts.map((post) => ({ ...post, feedId, id: getUniqueId() }));
+        watchedState.addedRSSData.posts = [...posts, ...newPostsFulfilled];
         watchedState.addedRSSData.feeds = [...feeds, newFeed];
       })
       .catch((err) => {
@@ -98,10 +95,11 @@ const app = (initialState, i18nextInst) => {
 
   const handleModal = (event) => {
     const button = event.relatedTarget;
-    const postId = button.getAttribute('data-id');
-    const { title, description, url } = watchedState.addedRSSData.posts[postId];
-    watchedState.UIstate.modalData = [];
-    watchedState.UIstate.modalData.push(title, description, url);
+    const clickedPostId = button.getAttribute('data-id');
+    const clickedPost = watchedState.addedRSSData.posts.filter(({ id }) => id === clickedPostId)[0];
+    const { title, description, url } = clickedPost;
+    watchedState.UIstate.modalData = {};
+    watchedState.UIstate.modalData = { title, description, url };
   };
 
   const updatePostsList = (links) => {
@@ -118,8 +116,7 @@ const app = (initialState, i18nextInst) => {
           const { feeds, posts } = watchedState.addedRSSData;
           const feedId = feeds.filter((feed) => feed.title === freshFeed.title)[0].id;
           const postsToAdd = _.differenceWith(freshPosts, posts, (fresh, old) => fresh.title === old.title);
-          postsToAdd.forEach((post) => ({ ...post, feedId }));
-          allNewPosts = [...allNewPosts, ...postsToAdd];
+          allNewPosts = [...allNewPosts, ...postsToAdd.map((post) => ({ ...post, feedId, id: getUniqueId() }))];
         });
         watchedState.addedRSSData.posts = [...watchedState.addedRSSData.posts, ...allNewPosts];
       })
@@ -145,7 +142,7 @@ const runApp = () => {
     addedRSSData: { feeds: [], posts: [] },
     UIstate: {
       watchedPostsIds: [],
-      modalData: [], // title, description, postUrl
+      modalData: {}, // title, description, postUrl
     },
   };
   const i18nextInstance = i18next.createInstance();
