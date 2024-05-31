@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const getUniqueId = () => Math.random().toString(36).substring(2, 6);
 
+const comparePosts = (fresh, old) => fresh.title === old.title;
+
 const hasRSS = (xml) => xml.children[0].localName === 'rss';
 
 const makeUrlProxied = (url) => {
@@ -68,6 +70,7 @@ const parseData = (data) => {
 
 export {
   getUniqueId,
+  comparePosts,
   loadData,
   parseData,
 };

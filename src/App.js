@@ -1,10 +1,10 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
-import * as _ from 'lodash';
+import { differenceWith } from 'lodash';
 import makeStateWatched from './View.js';
 import {
   loadData, parseData,
-  getUniqueId,
+  getUniqueId, comparePosts,
 } from './Utils.js';
 
 const app = (initialState, i18nextInst) => {
@@ -115,8 +115,11 @@ const app = (initialState, i18nextInst) => {
           const { feed: freshFeed, posts: freshPosts } = freshData;
           const { feeds, posts } = watchedState.addedRSSData;
           const feedId = feeds.filter((feed) => feed.title === freshFeed.title)[0].id;
-          const postsToAdd = _.differenceWith(freshPosts, posts, (fresh, old) => fresh.title === old.title);
-          allNewPosts = [...allNewPosts, ...postsToAdd.map((post) => ({ ...post, feedId, id: getUniqueId() }))];
+          const postsToAdd = differenceWith(freshPosts, posts, comparePosts);
+          const postsToAddFulfilled = postsToAdd.map((post) => (
+            { ...post, feedId, id: getUniqueId() }
+          ));
+          allNewPosts = [...allNewPosts, ...postsToAddFulfilled];
         });
         watchedState.addedRSSData.posts = [...watchedState.addedRSSData.posts, ...allNewPosts];
       })
