@@ -1,9 +1,10 @@
 import * as yup from 'yup';
 import i18next from 'i18next';
+import * as _ from 'lodash';
 import makeStateWatched from './View.js';
 import {
-  getUniqueId, loadData, parseData,
-  getNormalizedData, getRenewedData,
+  loadData, parseData,
+  getUniqueId,
 } from './Utils.js';
 
 const app = (initialState, i18nextInst) => {
@@ -67,14 +68,14 @@ const app = (initialState, i18nextInst) => {
         watchedState.addedRSSLinks.push(url);
         watchedState.state = 'success';
         const feedId = getUniqueId();
-        newFeed.feedId = feedId;
+        newFeed.id = feedId;
         newPosts.forEach((post) => {
           const postWithFeedId = { ...post, feedId };
           return postWithFeedId;
         });
         const { feeds, posts } = watchedState.addedRSSData;
         watchedState.addedRSSData.posts = [...posts, ...newPosts];
-        watchedState.addedRSSData.feeds = [...feeds, ...newFeed];
+        watchedState.addedRSSData.feeds = [...feeds, newFeed];
       })
       .catch((err) => {
         handleError(err);
@@ -82,7 +83,6 @@ const app = (initialState, i18nextInst) => {
   };
 
   const handleInputChange = ({ target }) => {
-    console.log(`${JSON.stringify(watchedState)}`);
     const url = target.value;
     watchedState.inputValue = url;
     watchedState.state = 'filling';
@@ -108,20 +108,20 @@ const app = (initialState, i18nextInst) => {
     if (links.length === 0) {
       return setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000');
     }
-    const newData = { feeds: {}, posts: {} };
-    const oldData = watchedState.addedRSSData;
+    let allNewPosts = [];
     const promises = links.map((link) => Promise.resolve(loadData(link)));
     return Promise.all(promises)
       .then((values) => {
         values.forEach(({ data }) => {
-          const xml = parseData(data.contents);
-          const { feed: newFeed, posts: newPosts } = getNormalizedData(xml);
-          newData.feeds = { ...newData.feeds, ...newFeed };
-          newData.posts = { ...newData.posts, ...newPosts };
+          const freshData = parseData(data.contents);
+          const { feed: freshFeed, posts: freshPosts } = freshData;
+          const { feeds, posts } = watchedState.addedRSSData;
+          const feedId = feeds.filter((feed) => feed.title === freshFeed.title)[0].id;
+          const postsToAdd = _.differenceWith(freshPosts, posts, (fresh, old) => fresh.title === old.title);
+          postsToAdd.forEach((post) => ({ ...post, feedId }));
+          allNewPosts = [...allNewPosts, ...postsToAdd];
         });
-        const { renewedFeeds, renewedPosts } = getRenewedData(oldData, newData);
-        watchedState.addedRSSData.posts = { ...renewedPosts };
-        watchedState.addedRSSData.feeds = { ...renewedFeeds };
+        watchedState.addedRSSData.posts = [...watchedState.addedRSSData.posts, ...allNewPosts];
       })
       .catch((err) => {
         handleError(err);
