@@ -122,9 +122,12 @@ const app = (initialState, i18nextInst) => {
           allNewPosts = [...allNewPosts, ...postsToAddFulfilled];
         });
         watchedState.addedRSSData.posts = [...watchedState.addedRSSData.posts, ...allNewPosts];
+        watchedState.updateStatus = 'success';
       })
       .catch((err) => {
-        handleError(err);
+        watchedState.updateStatus = '';
+        watchedState.updateStatus = 'failed';
+        console.log(`${err.message}`);
       })
       .finally(() => setTimeout(() => updatePostsList(watchedState.addedRSSLinks), '5000'));
   };
@@ -141,6 +144,7 @@ const runApp = () => {
     state: 'initialState',
     errorMessage: '',
     inputValue: '',
+    updateStatus: 'hasn`t been updated yet',
     addedRSSLinks: [],
     addedRSSData: { feeds: [], posts: [] },
     UIstate: {
@@ -155,18 +159,20 @@ const runApp = () => {
     resources: {
       ru: {
         translation: {
+          postsTitle: 'Посты',
+          feedsTitle: 'Фиды',
+          quickViewBtn: 'Просмотр',
+          loadingProcess: 'Идет загрузка',
+          success: 'RSS успешно загружен',
           error: {
             'invalid url': 'Ссылка должна быть валидным URL',
             'already exists': 'RSS уже существует',
             'network error': 'Ошибка сети',
             'doesn`t has rss': 'Ресурс не содержит валидный RSS',
             'parsing error': 'Ошибка обработки данных',
+            'update error': 'Ошибка обновления постов',
           },
           unexpectedError: '{{error}}',
-          loadingProcess: 'Идет загрузка',
-          success: 'RSS успешно загружен',
-          postsTitle: 'Посты',
-          feedsTitle: 'Фиды',
         },
       },
     },

@@ -70,13 +70,13 @@ const displayPosts = (posts, state, UIelements, i18nextInstance) => {
 
   const { UIstate: { watchedPostsIds } } = state;
   const postsData = Object.values(posts);
-  postsData.map((post) => {
+  postsData.forEach((post) => {
     const { url, title: titleOfPost, id } = post;
 
     const button = document.createElement('button');
     const btnClassName = 'btn btn-outline-primary btn-sm';
     button.className = btnClassName;
-    button.textContent = 'Просмотр';
+    button.textContent = i18nextInstance.t('quickViewBtn');
     button.setAttribute('type', 'button');
     button.setAttribute('data-id', id);
     button.setAttribute('data-bs-toggle', 'modal');
@@ -94,7 +94,7 @@ const displayPosts = (posts, state, UIelements, i18nextInstance) => {
     li.className = 'list-group-item d-flex justify-content-between align-items-start border-0 border-end-0';
     li.append(a);
     li.append(button);
-    return list.appendChild(li);
+    list.appendChild(li);
   });
 };
 
@@ -110,13 +110,21 @@ const displayFeeds = (feeds, UIelements, i18nextInstance) => {
   list.innerHTML = '';
 
   const feedsData = Object.values(feeds);
-  feedsData.map((feed) => {
+  feedsData.forEach((feed) => {
     const { title: titleOfFeed, description } = feed;
+
     const li = document.createElement('li');
     li.className = 'list-group-item border-0 border-end-0';
-    const html = `<h3 class="h6 m-0">${titleOfFeed}</h3><p class="m-0 small text-black-50">${description}</p>`;
-    li.innerHTML = html;
-    return list.appendChild(li);
+    const h3 = document.createElement('h3');
+    h3.className = 'h6 m-0';
+    h3.textContent = `${titleOfFeed}`;
+    const p = document.createElement('p');
+    p.className = 'm-0 small text-black-50';
+    p.textContent = `${description}`;
+
+    li.appendChild(h3);
+    li.appendChild(p);
+    list.appendChild(li);
   });
 };
 
@@ -129,31 +137,34 @@ const putDataIntoModal = (data, UIelements) => {
 };
 
 const getRender = (state, UIelements, i18nextInstance) => (path, value) => {
-  const render = (pth, val) => {
-    switch (pth) {
-      case 'state':
-        handleState(val, UIelements, i18nextInstance);
-        break;
-      case 'errorMessage':
-        displayErrorFeedbackText(val, UIelements, i18nextInstance);
-        break;
-      case 'addedRSSData.posts':
-        displayPosts(val, state, UIelements, i18nextInstance);
-        break;
-      case 'addedRSSData.feeds':
-        displayFeeds(val, UIelements, i18nextInstance);
-        break;
-      case 'UIstate.watchedPostsIds':
-        makeWatchedPostPale(val);
-        break;
-      case 'UIstate.modalData':
-        putDataIntoModal(val, UIelements);
-        break;
-      default:
-        break;
-    }
-  };
-  return render(path, value);
+  switch (path) {
+    case 'state':
+      handleState(value, UIelements, i18nextInstance);
+      break;
+    case 'errorMessage':
+      displayErrorFeedbackText(value, UIelements, i18nextInstance);
+      break;
+    case 'updateStatus':
+      if (value === 'failed') {
+        displayErrorFeedbackAppearance(UIelements);
+        displayErrorFeedbackText('update error', UIelements, i18nextInstance);
+      }
+      break;
+    case 'addedRSSData.posts':
+      displayPosts(value, state, UIelements, i18nextInstance);
+      break;
+    case 'addedRSSData.feeds':
+      displayFeeds(value, UIelements, i18nextInstance);
+      break;
+    case 'UIstate.watchedPostsIds':
+      makeWatchedPostPale(value);
+      break;
+    case 'UIstate.modalData':
+      putDataIntoModal(value, UIelements);
+      break;
+    default:
+      break;
+  }
 };
 
 const makeStateWatched = (state, UIelements, i18nextInst) => (
