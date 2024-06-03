@@ -26,18 +26,18 @@ const displayErrorFeedbackText = (error, UIelements, i18nextInstance) => {
 
 const handleState = (state, UIelements, i18nextInstance) => {
   const {
-    form, button,
+    form, submitButton,
     input, feedback,
   } = UIelements;
 
   switch (state) {
     case 'filling':
-      button.classList.remove('disabled');
+      submitButton.classList.remove('disabled');
       input.classList.remove('is-invalid');
       feedback.textContent = '';
       break;
     case 'validating':
-      button.classList.add('disabled');
+      submitButton.classList.add('disabled');
       input.setAttribute('disabled', '');
       break;
     case 'loading':

@@ -13,7 +13,7 @@ const app = (initialState, i18nextInst) => {
     postsAndFeedsArea: document.querySelector('.container-xxl'),
     form: document.querySelector('form'),
     input: document.querySelector('#url-input'),
-    button: document.querySelector('button[type="submit"]'),
+    submitButton: document.querySelector('button[type="submit"]'),
     feedback: document.querySelector('.feedback'),
     posts: {
       title: document.querySelector('div.posts h2'),
@@ -149,7 +149,7 @@ const runApp = () => {
     addedRSSData: { feeds: [], posts: [] },
     UIstate: {
       watchedPostsIds: [],
-      modalData: {}, // title, description, postUrl
+      modalData: {}, // title, description, url
     },
   };
   const i18nextInstance = i18next.createInstance();
