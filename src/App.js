@@ -83,6 +83,14 @@ const app = (initialState, i18nextInst) => {
     }
   };
 
+  const handlePostsAuxclick = (e) => {
+    const linkElement = e.target.localName === 'a' && e.target.hasAttribute('data-id');
+    if (linkElement) {
+      const id = e.target.getAttribute('data-id');
+      watchedState.UIstate.watchedPostsIds.push(id);
+    }
+  };
+
   const handleModal = (event) => {
     const button = event.relatedTarget;
     const clickedPostId = button.getAttribute('data-id');
@@ -126,6 +134,7 @@ const app = (initialState, i18nextInst) => {
   UIelements.form.addEventListener('submit', handleSubmit);
   UIelements.modal.addEventListener('show.bs.modal', handleModal);
   UIelements.postsAndFeedsArea.addEventListener('click', handlePostsClick);
+  UIelements.postsAndFeedsArea.addEventListener('auxclick', handlePostsAuxclick);
   updatePostsList(watchedState.addedRSSLinks);
 };
 
