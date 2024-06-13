@@ -12,7 +12,7 @@ const displayErrorFeedbackAppearance = ({ feedback }) => {
 
 const displayPositiveFeedbackText = (type, UIelements, i18nextInstance) => {
   const { feedback } = UIelements;
-  feedback.textContent = i18nextInstance.t(`${type}`);
+  feedback.textContent = i18nextInstance.t(type);
 };
 
 const displayErrorFeedbackText = (error, UIelements, i18nextInstance) => {

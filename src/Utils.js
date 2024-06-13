@@ -1,3 +1,4 @@
+import * as yup from 'yup';
 import axios from 'axios';
 
 const getUniqueId = () => Math.random().toString(36).substring(2, 6);
@@ -6,10 +7,19 @@ const comparePosts = (fresh, old) => fresh.title === old.title;
 
 const hasRSS = (xml) => xml.children[0].localName === 'rss';
 
+const validate = (url, addedUrls) => {
+  yup.setLocale({
+    mixed: { notOneOf: 'already exists' },
+    string: { url: 'invalid url' },
+  });
+  const schema = yup.string().url().notOneOf(addedUrls);
+  return schema.validate(url);
+};
+
 const makeUrlProxied = (url) => {
-  const proxyHTTPAddress = 'https://allorigins.hexlet.app/get?disableCache=true&url=';
-  const proxiedUrl = `${proxyHTTPAddress}${url}`;
-  return proxiedUrl;
+  const proxy = new URL('https://allorigins.hexlet.app/get?disableCache=true');
+  proxy.searchParams.append('url', url);
+  return proxy.href;
 };
 
 const loadData = (url) => {
@@ -69,6 +79,7 @@ const parseData = (data) => {
 };
 
 export {
+  validate,
   getUniqueId,
   comparePosts,
   loadData,

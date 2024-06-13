@@ -1,9 +1,8 @@
-import * as yup from 'yup';
 import i18next from 'i18next';
 import { differenceWith } from 'lodash';
 import makeStateWatched from './View.js';
 import {
-  loadData, parseData,
+  validate, loadData, parseData,
   getUniqueId, comparePosts,
 } from './Utils.js';
 
@@ -43,20 +42,11 @@ const app = (initialState, i18nextInst) => {
     }
   };
 
-  const validate = (url) => {
-    yup.setLocale({
-      mixed: { notOneOf: 'already exists' },
-      string: { url: 'invalid url' },
-    });
-    const schema = yup.string().url().notOneOf(watchedState.addedRSSLinks);
-    return schema.validate(url);
-  };
-
   const handleSubmit = (event) => {
     event.preventDefault();
     watchedState.state = 'validating';
     const urlString = watchedState.inputValue;
-    validate(urlString)
+    validate(urlString, watchedState.addedRSSLinks)
       .then((url) => {
         watchedState.state = 'loading';
         return loadData(url);
@@ -114,7 +104,7 @@ const app = (initialState, i18nextInst) => {
           const freshData = parseData(data.contents);
           const { feed: freshFeed, posts: freshPosts } = freshData;
           const { feeds, posts } = watchedState.addedRSSData;
-          const feedId = feeds.filter((feed) => feed.title === freshFeed.title)[0].id;
+          const feedId = feeds.find((feed) => feed.title === freshFeed.title).id;
           const postsToAdd = differenceWith(freshPosts, posts, comparePosts);
           const postsToAddFulfilled = postsToAdd.map((post) => (
             { ...post, feedId, id: getUniqueId() }
