@@ -50,6 +50,7 @@ const handleState = (state, UIelements, i18nextInstance) => {
       form.reset();
       input.removeAttribute('disabled');
       input.focus();
+      submitButton.classList.remove('disabled');
       displayPositiveFeedbackAppearance(UIelements);
       displayPositiveFeedbackText('success', UIelements, i18nextInstance);
       break;
